@@ -157,7 +157,7 @@
             <p class="url" style="zoom: {ratio};">{formatUrl(url)}</p>
         </div>
     {/if}
-    <webview id="webview" src={parsedSrc} bind:this={webview} />
+    <webview id="webview" src={parsedSrc} bind:this={webview}></webview>
 </div>
 
 <style>
