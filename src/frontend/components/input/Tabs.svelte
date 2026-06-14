@@ -147,7 +147,7 @@
         background-color: var(--color);
     }
 
-    .tabs :not(:first-child) .tab::before {
+    .tabs :global(:not(:first-child) .tab::before) {
         content: "";
         position: absolute;
         left: -2px; /* hidden under active */
