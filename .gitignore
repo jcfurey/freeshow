@@ -8,6 +8,9 @@
 /build/
 /dist/
 
+# generated at build time by scripts/preBuild.js (derived from the committed base tsconfigs)
+/config/typescript/tsconfig.*.prod.json
+
 *.env
 
 .DS_Store
