@@ -15,7 +15,14 @@ export default defineConfig({
                 if (warning.code.startsWith("a11y-") || warning.code.startsWith("a11y_")) return
                 handler(warning)
             }
-        })
+        }),
+        // Dev only: index.html references the production bundle (./build/bundle.js) for the packaged app;
+        // in `vite` dev serve, rewrite it to the live entry module so `npm start` + HMR work.
+        {
+            name: "freeshow-dev-index-html",
+            apply: "serve",
+            transformIndexHtml: (html) => html.replace(/<script[^>]*src="\.\/build\/bundle\.js"[^>]*><\/script>\s*<link[^>]*href="\.\/build\/bundle\.css"[^>]*>/, '<script type="module" src="/src/frontend/main.ts"></script>')
+        }
     ],
     root: production ? "." : "public",
     publicDir: false,

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest"
-import { checkIfMatching, clone, wait } from "./helpers"
+import { describe, it, expect, vi } from "vitest"
+import { checkIfMatching, clone, resolveMachineId, wait } from "./helpers"
 
 describe("electron helpers", () => {
     describe("clone", () => {
@@ -39,6 +39,35 @@ describe("electron helpers", () => {
     describe("wait", () => {
         it("resolves after the given delay", async () => {
             await expect(wait(1)).resolves.toBe("ended")
+        })
+    })
+
+    describe("resolveMachineId", () => {
+        it("returns the stored machine id when present (no hardware lookup)", () => {
+            const set = vi.fn()
+            const getHardwareId = vi.fn()
+            expect(resolveMachineId({ get: () => "stored-id", set }, getHardwareId)).toBe("stored-id")
+            expect(getHardwareId).not.toHaveBeenCalled()
+            expect(set).not.toHaveBeenCalled()
+        })
+
+        it("falls back to the hardware id and persists it", () => {
+            const set = vi.fn()
+            expect(resolveMachineId({ get: () => undefined, set }, () => "hw-id")).toBe("hw-id")
+            expect(set).toHaveBeenCalledWith("machineId", "hw-id")
+        })
+
+        it("generates a per-process UUID when the hardware id is unavailable, and persists it", () => {
+            const set = vi.fn()
+            const id = resolveMachineId({ get: () => undefined, set }, () => {
+                throw new Error("no machine id")
+            })
+            expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+            expect(set).toHaveBeenCalledWith("machineId", id)
+        })
+
+        it("still resolves an id when no config store is available", () => {
+            expect(resolveMachineId(undefined, () => "hw-id")).toBe("hw-id")
         })
     })
 })
