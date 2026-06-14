@@ -134,7 +134,7 @@ export async function decompressZipStream(file: string, asBuffer = false, option
 
 // neutralise path-traversal/absolute segments so a crafted archive can't write outside the extraction directory (zip-slip)
 // legitimate nested names (e.g. "ppt/media/img.png") are left unchanged
-function sanitizeZipPath(name: string): string {
+export function sanitizeZipPath(name: string): string {
     return name
         .replace(/\\/g, "/")
         .split("/")

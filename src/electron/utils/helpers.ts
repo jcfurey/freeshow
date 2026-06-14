@@ -69,23 +69,31 @@ export function waitUntilValueIsDefined(value: () => any, intervalTime = 50, tim
     })
 }
 
+type MachineIdConfig = { get(key: string): string | undefined; set(key: string, value: string): void } | undefined
+
+// Pure, testable core: resolve (and persist) the machine id from its collaborators.
+// Extracted from getMachineId so it can be unit-tested without the lazy require()s.
+export function resolveMachineId(config: MachineIdConfig, getHardwareId: () => string): string {
+    const stored = config?.get ? config.get("machineId") : undefined
+    if (stored) return stored
+
+    let id: string
+    try {
+        // we need to store this value for now, because it's already used, but we can remove eventually once it's stored in the config for most users
+        id = getHardwareId()
+    } catch (machineIdErr) {
+        console.warn("Could not retrieve legacy hardware machine ID, generating UUID instead:", machineIdErr)
+        id = crypto.randomUUID()
+    }
+
+    if (config?.set) config.set("machineId", id)
+    return id
+}
+
 export function getMachineId(): string {
     try {
         const { config } = require("../data/store")
-        let id = config?.get ? config.get("machineId") : undefined
-        if (id) return id
-
-        try {
-            // we need to store this value for now, because it's already used, but we can remove eventually once it's stored in the config for most users
-            const { machineIdSync } = require("node-machine-id")
-            id = machineIdSync()
-        } catch (machineIdErr) {
-            console.warn("Could not retrieve legacy hardware machine ID, generating UUID instead:", machineIdErr)
-            id = crypto.randomUUID()
-        }
-
-        if (config?.set) config.set("machineId", id)
-        return id
+        return resolveMachineId(config, () => require("node-machine-id").machineIdSync())
     } catch (err) {
         console.warn("Could not get machine ID from config store:", err)
         // avoid a shared constant: a fixed string would make every failing device share one identity,

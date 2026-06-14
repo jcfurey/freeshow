@@ -202,7 +202,7 @@
         margin-top: 10px;
         margin-left: 10px;
     }
-    .card:has(.popup-back) h2 {
+    .card:has(:global(.popup-back)) h2 {
         margin-left: 35px;
     }
 
