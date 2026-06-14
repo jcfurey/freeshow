@@ -22,6 +22,8 @@ What automated checks **cannot** see, and where the residual risk actually lives
 
 No evidence of a broad functional regression was found. The user's observation ("app seems to work fine") is consistent with this: the confirmed issues are either cosmetic, dev-only, or behind niche features.
 
+> **Update — fixes applied in this PR (`claude/regression-audit`):** all CONFIRMED issues are fixed — LTC worklet ([H1](#h1)), the pruned `:has()`/structural CSS ([M1](#m1), incl. the Tabs divider), and dev-mode `npm start` ([M2](#m2), verified the dev server serves `/src/frontend/main.ts`). The two highest-value P1 tests were added (`sanitizeZipPath` zip-slip + `sanitizeFileName` — **263 unit tests** total, all green; build + svelte-check still clean). `getMachineId` testing is deferred ([§8](#8-recommended-new-automated-tests-coverage-gaps)). All NEEDS-QA items remain for manual verification.
+
 ---
 
 ## 1. Severity-ranked findings (quick scan)
@@ -203,9 +205,9 @@ The confirmed-clean automated layer covers logic; this list covers the runtime b
 The security/sync logic one would worry about is **already well-covered** — `expression.ts` (incl. all the `new Function` replacement security cases), `syncLedger.ts` (per-item merge), and the CSV CRLF fix all have thorough tests. The real gaps are the *other* audit-commit fixes that shipped without tests, plus a few logic-dense untested utilities. Prioritized:
 
 **P1 — security-sensitive, changed in our work, unit-testable**
-1. `src/electron/data/zip.ts` → **`sanitizeZipPath()`** (zip-slip guard) — highest value; currently *not exported*, so export it and unit-test (`../../x`→`x`, `/abs/x`→`abs/x`, `a\b\c`→`a/b/c`, legit nested unchanged).
-2. `src/electron/utils/files.ts` → **`sanitizeFileName()`**, `getValidFileName`, `getExtension` — pure string; needs `vi.mock("electron")` + store (converter-test pattern).
-3. `src/electron/utils/helpers.ts` → **`getMachineId()`** — per-process UUID fallback feeds sync identity; mock `node-machine-id` + store.
+1. `src/electron/data/zip.ts` → **`sanitizeZipPath()`** (zip-slip guard) — highest value; was *not exported*. **✅ Done in this PR** — exported + unit-tested (`zip.test.ts`: traversal/absolute/backslash/dot segments, legit nested preserved).
+2. `src/electron/utils/files.ts` → **`sanitizeFileName()`** — pure string. **✅ Done in this PR** — unit-tested (`files.test.ts`: reserved chars, control chars, whitespace, trailing dots, no surviving path separators, non-string input) via the converter-style `vi.mock` of the electron/main-process tree. (`getValidFileName`/`getExtension` are good follow-ups.)
+3. `src/electron/utils/helpers.ts` → **`getMachineId()`** — per-process UUID fallback feeds sync identity. **⚠️ Deferred** — the function's *lazy* `require("../data/store")` / `require("node-machine-id")` are **not** intercepted by vitest's `vi.mock` (it loads the real store, which throws, so every branch hits the UUID fallback). Needs a small refactor to injectable deps or static imports to be unit-testable.
 
 **P2 — logic-heavy, runtime-critical, untested**
 4. `src/electron/utils/LyricSearch.ts` → `csvToArray` (public, testable now), `decodeHtmlEntities`, `parseUGStore`, `getLyricFromHtml` (need visibility tweak) — parse untrusted network HTML/CSV/JSON.
