@@ -55,6 +55,12 @@ export function showSearch(searchValue: string, shows: ShowList[]): ShowList[] {
 export function showSearchFilter(searchValue: string, show: ShowList) {
     if (!show.name) return 0
 
+    // a "quoted" query forces a strict, literal phrase match (no fuzzy / per-word scatter)
+    const trimmedQuery = searchValue.trim()
+    if (trimmedQuery.length > 2 && trimmedQuery.startsWith('"') && trimmedQuery.endsWith('"')) {
+        return exactPhraseScore(trimmedQuery.slice(1, -1), show)
+    }
+
     const songNumber: string = show.quickAccess?.number || ""
     const formattedSongNumber = formatSearch(songNumber, true)
     const formattedSearchValue = formatSearch(searchValue, true)
@@ -103,6 +109,21 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
 
     const combinedScore = titleCoverageScore + contentCoverageScore + titleSimilarity * 20 + contentDensityScore
     return combinedScore >= 100 ? 99 : combinedScore
+}
+
+// strict literal-phrase match for quoted queries: the phrase must appear contiguously (normalized), no fuzzy
+function exactPhraseScore(phrase: string, show: ShowList): number {
+    const needle = formatSearch(phrase, false)
+    if (!needle) return 0
+
+    const songNumber = show.quickAccess?.number || ""
+    const title = formatSearch(`${songNumber} ${show.name}`, false)
+    if (title.includes(needle)) return 100
+
+    const content = formatSearch(get(textCache)[show.id] || "", false)
+    if (content.includes(needle)) return 60
+
+    return 0
 }
 
 // fraction (0-1) of words present in text
