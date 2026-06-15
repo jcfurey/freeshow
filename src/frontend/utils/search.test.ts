@@ -125,3 +125,24 @@ describe("showSearch ranking", () => {
         expect(res[0]?.id).toBe("amazing")
     })
 })
+
+describe("exact phrase (quoted) search", () => {
+    beforeEach(() => h.textCache._set({}))
+
+    it("matches a quoted phrase that appears in the title", () => {
+        expect(showSearchFilter('"amazing grace"', shows[0])).toBe(100)
+    })
+    it("does not match without the exact phrase, and ignores fuzzy/typos", () => {
+        expect(showSearchFilter('"amazing grace"', shows[1])).toBe(0)
+        expect(showSearchFilter('"amzing grace"', shows[0])).toBe(0)
+    })
+    it("matches a quoted phrase found in lyrics/content", () => {
+        h.textCache._set({ great: "thou my everlasting portion more than friend" })
+        const res = showSearch('"everlasting portion"', shows)
+        expect(res[0]?.id).toBe("great")
+    })
+    it("returns nothing when the quoted phrase matches no show", () => {
+        const res = showSearch('"not a real phrase"', shows)
+        expect(res.length).toBe(0)
+    })
+})
