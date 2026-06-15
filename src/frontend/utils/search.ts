@@ -89,15 +89,20 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     const titleCoverageScore = wordCoverage(titleText, queryWords) * 65
     const contentCoverageScore = wordCoverage(contentText, wordsForContent) * 35
 
-    // Fuzzy title similarity for typo tolerance (short words removed, then de-spaced)
-    const trimmedSearch = formatSearch(removeShortWords(formatSearch(searchValue, false)), true)
-    const titleSimilarityScore = (trimmedSearch ? similarity(showNameWithNumber, trimmedSearch) : 0) * 20
-
     // Small tiebreaker: reward repeated/contiguous occurrences of the query in content
     const contentDensityScore = contentDensity(contentText, formattedSearchValue)
 
-    const combinedScore = titleCoverageScore + contentCoverageScore + titleSimilarityScore + contentDensityScore
-    return combinedScore >= 100 ? 99 : combinedScore < 3 ? 0 : combinedScore
+    // Fuzzy title similarity (0-1). IMPORTANT: similarity() is non-zero even for unrelated
+    // text, so it must never make a show match on its own — only a strong near-match (typo)
+    // qualifies; otherwise it just refines ranking among shows that already matched.
+    const trimmedSearch = formatSearch(removeShortWords(formatSearch(searchValue, false)), true)
+    const titleSimilarity = trimmedSearch ? similarity(showNameWithNumber, trimmedSearch) : 0
+
+    // Require a real match: an actual word/phrase hit, or a strong fuzzy title match.
+    if (!(titleCoverageScore || contentCoverageScore || contentDensityScore || titleSimilarity >= 0.7)) return 0
+
+    const combinedScore = titleCoverageScore + contentCoverageScore + titleSimilarity * 20 + contentDensityScore
+    return combinedScore >= 100 ? 99 : combinedScore
 }
 
 // fraction (0-1) of words present in text
