@@ -12,7 +12,35 @@ vi.mock("../stores", () => ({ textCache: h.textCache, categories: h.categories, 
 vi.mock("../components/helpers/array", () => ({
     sortObjectNumbers: (arr: any[], key: string, desc = false) => [...arr].sort((a, b) => (desc ? (b[key] || 0) - (a[key] || 0) : (a[key] || 0) - (b[key] || 0)))
 }))
-vi.mock("../converters/txt", () => ({ similarity: (a: string, b: string) => (a === b ? 1 : 0) }))
+// mirror the real Levenshtein-based similarity so the test reflects production behaviour
+vi.mock("../converters/txt", () => {
+    const editDistance = (a: string, b: string) => {
+        a = a.toLowerCase()
+        b = b.toLowerCase()
+        const costs: number[] = []
+        for (let i = 0; i <= a.length; i++) {
+            let last = i
+            for (let j = 0; j <= b.length; j++) {
+                if (i === 0) costs[j] = j
+                else if (j > 0) {
+                    let next = costs[j - 1]
+                    if (a[i - 1] !== b[j - 1]) next = Math.min(Math.min(next, last), costs[j]) + 1
+                    costs[j - 1] = last
+                    last = next
+                }
+            }
+            if (i > 0) costs[b.length] = last
+        }
+        return costs[b.length]
+    }
+    const similarity = (s1: string, s2: string) => {
+        const longer = s1.length >= s2.length ? s1 : s2
+        const shorter = s1.length >= s2.length ? s2 : s1
+        if (!longer.length) return 1
+        return (longer.length - editDistance(longer, shorter)) / longer.length
+    }
+    return { similarity }
+})
 
 import { formatSearch, showSearch, showSearchFilter } from "./search"
 
@@ -86,5 +114,14 @@ describe("showSearch ranking", () => {
     it("normalizes the top match to 100", () => {
         const res = showSearch("grace", shows)
         expect(res[0].match).toBe(100)
+    })
+    it("does not flood results with unrelated shows (fuzzy similarity alone never matches)", () => {
+        // regression: similarity() is non-zero for unrelated text; it must not include non-matching shows
+        const res = showSearch("kitchen", shows)
+        expect(res.length).toBe(0)
+    })
+    it("still matches a close typo via fuzzy title similarity", () => {
+        const res = showSearch("amzinggrace", shows)
+        expect(res[0]?.id).toBe("amazing")
     })
 })
