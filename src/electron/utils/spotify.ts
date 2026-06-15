@@ -112,7 +112,10 @@ export async function getSpotifyState(): Promise<SpotifyState | null> {
         if (isMac)
             return new Promise((res) =>
                 exec(`osascript -e '${macScript().replace(/'/g, "'\\''")}'`, (e, out) => {
-                    if (e && !out.includes("NOT_RUNNING")) console.error("[Spotify] Mac error:", e)
+                    // Spotify not installed/running: the script can't load Spotify's dictionary and fails to compile
+                    // (-2741) or resolve the app (-1728/-600), so it never returns NOT_RUNNING. Treat these as benign.
+                    const benign = out.includes("NOT_RUNNING") || /-2741|-1728|-600|isn't running/i.test(e?.message || "")
+                    if (e && !benign) console.error("[Spotify] Mac error:", e)
                     const p = out?.trim().split("|SEC|")
                     res(e || out.includes("NOT_RUNNING") || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
                 })
