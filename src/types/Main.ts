@@ -284,9 +284,20 @@ export interface Variable {
 export interface Interaction {
     name: string
     inputs: InteractionInput[]
+    options?: Options
     lastConnection?: { id: string; secret: string }
 }
-type InteractionInput = TextQuestion | NumberQuestion | MultipleChoiceQuestion
+type Options = {
+    requireName?: boolean // default = true
+    maxTime?: number // seconds, default = no limit
+}
+
+export type InteractionInput = Heading | TextQuestion | NumberQuestion | MultipleChoiceQuestion
+interface Heading {
+    type: "heading"
+    question: string
+    inputType?: "none"
+}
 interface QuestionBase {
     question: string
 }

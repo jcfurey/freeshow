@@ -6,11 +6,13 @@
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import InputRow from "../../input/InputRow.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { getInteraction, getActiveInteractions, startInteraction, stopInteraction } from "./interactions"
-    import InputRow from "../../input/InputRow.svelte"
+    import { getActiveInteractions, getInteraction, startInteraction, stopInteraction } from "./interactions"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     export let searchValue: string
     console.log(searchValue)
@@ -29,8 +31,8 @@
     }
 
     $: openedId = $openedInteractionId
-    $: openedInteraction = $interactions[openedId] || null
 
+    $: openedInteraction = $interactions[openedId] || null
     let activeInteractions = getActiveInteractions()
 
     function updateInteractionName(id: string, value: string) {
@@ -83,11 +85,62 @@
 
     let answers: { [key: string]: any }[] = []
     let clients: { [key: string]: any } = {}
+    let currentAnswer: any = null
+    let inputIndex: number = -1
+    let closed: boolean = false
+
+    let seconds = 0
+    let startTime = 0
+
+    function formatTime(s: number) {
+        const sign = s < 0 ? "-" : ""
+        s = Math.abs(s)
+        const min = Math.floor(s / 60)
+        const sec = s % 60
+        return `${sign}${min}:${sec < 10 ? "0" : ""}${sec}`
+    }
+
+    function hasAnswer(input: any) {
+        if (!input) return false
+        if (input.type === "text" || input.type === "number") return input.answer !== undefined && input.answer !== ""
+        if (input.type === "multi_choice") return input.options?.some((o: any) => o.isAnswer)
+        return false
+    }
+
+    function isCorrect(input: any, value: any) {
+        if (!input) return false
+        if (input.type === "text" || input.type === "number") {
+            if (input.answer === undefined || input.answer === "") return false
+            return String(value).toLowerCase().trim() === String(input.answer).toLowerCase().trim()
+        }
+        if (input.type === "multi_choice") {
+            return input.options?.some((o: any) => o.isAnswer && o.value === value)
+        }
+        return false
+    }
+
+    function setOption(key: string, value: any) {
+        interactions.update((a) => {
+            if (!a[openedId]) return a
+            a[openedId].options = a[openedId].options || {}
+            a[openedId].options[key] = value
+            return a
+        })
+    }
+
     async function start() {
         const interaction = await startInteraction(openedId)
         interaction?.onUpdate((data) => {
             answers = data.answers
             clients = data.clients
+            currentAnswer = data.currentAnswer
+            inputIndex = data.inputIndex
+            closed = data.closed
+        })
+        interaction?.onTick((data) => {
+            seconds = data.seconds
+            startTime = data.startTime
+            closed = data.closed
         })
 
         activeInteractions = getActiveInteractions()
@@ -97,10 +150,27 @@
         interaction?.onUpdate((data) => {
             answers = data.answers
             clients = data.clients
+            currentAnswer = data.currentAnswer
+            inputIndex = data.inputIndex
+            closed = data.closed
+        })
+        interaction?.onTick((data) => {
+            seconds = data.seconds
+            startTime = data.startTime
+            closed = data.closed
         })
     }
 
     $: console.log("Answers updated:", answers)
+    $: console.log("Clients updated:", clients)
+
+    let showPlayers = false
+    function kick(clientId: string) {
+        const interaction = getInteraction(openedId)
+        interaction?.kick(clientId)
+    }
+
+    let showOptions = false
 </script>
 
 <!-- WIP what is it? Polls / Quizzes / Q&A / Word Clouds / Game Shows / etc. -->
@@ -117,95 +187,179 @@
     <div class="header">
         <MaterialButton style="padding: 6px;" icon="back" title="actions.back" on:click={() => openedInteractionId.set("")} />
 
-        <p style="flex: 1;{openedInteraction.name ? '' : 'font-style: italic;opacity: 0.7;'}">
-            {openedInteraction.name || translateText("main.unnamed")}
+        <p style="flex: 1;{openedInteraction?.name ? '' : 'font-style: italic;opacity: 0.7;'}">
+            {openedInteraction?.name || translateText("main.unnamed")}
         </p>
 
         {#if activeInteractions.includes(openedId)}
-            <div style="display: flex;align-items: center;gap: 4px;opacity: 0.7;margin-right: 8px;">
-                <Icon id="people" white />
-                {Object.keys(clients).length}
-            </div>
-        {/if}
-    </div>
+            <!-- game id -->
+            {#if getInteraction(openedId)?.dbid}
+                <span style="font-family: monospace; opacity: 0.8;">ID: <span style="user-select: text;">{getInteraction(openedId)?.dbid}</span></span>
+            {/if}
 
-    <div class="inputs">
-        {#each openedInteraction.inputs as input, i}
-            <InputRow arrow={activeInteractions.includes(openedId) && Object.keys(answers[i] || {}).length > 0}>
-                <div
-                    class="input context #interaction_input"
-                    style="width: 100%;"
-                    id="#{i}"
-                    on:click={(e) => {
-                        if (e.target?.closest(".rearrange")) return
-
-                        popupData.set({ id: openedId, inputIndex: i })
-                        activePopup.set("interaction_input")
-                    }}
-                    role="none"
-                >
-                    <Icon id={input.type} size={1.5} gradient />
-                    <Icon id={inputTypeIcons[input.inputType]} white />
-
-                    <p style="flex: 1;{input.question ? '' : 'font-style: italic;opacity: 0.7;'}">
-                        {input.question || translateText("main.unnamed")}
-                    </p>
-
-                    {#if activeInteractions.includes(openedId)}
-                        ({Object.keys(answers[i] || {}).length || 0})
-                    {:else}
-                        <span>
-                            <MaterialButton class="rearrange" disabled={i === openedInteraction.inputs.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeInputs("forward", i)} />
-                            <MaterialButton class="rearrange" disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeInputs("backward", i)} />
-                        </span>
-                    {/if}
-                </div>
-
-                <div slot="menu">
-                    {#each Object.entries(answers[i] || {}) as [clientId, answer]}
-                        <p>
-                            {#if clients[clientId]?.name}<span>{clients[clientId].name}:</span>{/if}
-                            <span>{answer}</span>
-                        </p>
-                    {/each}
-                </div>
-            </InputRow>
-        {/each}
-
-        {#if !activeInteractions.includes(openedId)}
-            <MaterialButton variant="outlined" icon="add" on:click={addInput}>
-                <T id="New input" />
+            <!-- players count -->
+            <MaterialButton style="padding: 6px;" icon="people" on:click={() => (showPlayers = !showPlayers)} white>
+                <span style="font-family: monospace; opacity: 0.8;">{Object.keys(clients).length}</span>
             </MaterialButton>
         {/if}
     </div>
 
-    {#if activeInteractions.includes(openedId)}
-        <!-- current index... -->
+    {#if showOptions}
+        <div class="options">
+            <MaterialToggleSwitch label="interaction.require_name" checked={openedInteraction?.options?.requireName ?? true} defaultValue={true} on:change={(e) => setOption("requireName", e.detail)} />
 
-        <!-- go to next/previous index -->
-        <InputRow>
-            <MaterialButton variant="outlined" style="flex: 1;" on:click={() => getInteraction(openedId)?.previous()}>
-                <T id="Previous" />
-            </MaterialButton>
-            <MaterialButton variant="outlined" style="flex: 1;" on:click={() => getInteraction(openedId)?.next()}>
-                <T id="Next" />
-            </MaterialButton>
-        </InputRow>
-
-        <MaterialButton
-            variant="contained"
-            style="background-color: red;"
-            on:click={async () => {
-                await stopInteraction(openedId)
-                activeInteractions = getActiveInteractions()
-            }}
-        >
-            <T id="Stop/Close" />
-        </MaterialButton>
+            <MaterialNumberInput label="interaction.max_time (conditions.seconds)" value={openedInteraction?.options?.maxTime ?? 0} defaultValue={0} on:change={(e) => setOption("maxTime", e.detail)} />
+        </div>
+    {:else if showPlayers && activeInteractions.includes(openedId)}
+        <div class="players">
+            {#each Object.entries(clients) as [clientId, client], i}
+                <div class="player">
+                    <Icon id="profiles" white />
+                    <p style="flex: 1;">{client.name || `User #${i + 1}`}</p>
+                    <MaterialButton style="padding: 4px;" red on:click={() => kick(clientId)}><T id="interaction.kick" /></MaterialButton>
+                </div>
+            {/each}
+            {#if Object.keys(clients).length === 0}
+                <p style="text-align: center;opacity: 0.5;padding: 10px;font-style: italic;"><T id="settings.connections" /></p>
+            {/if}
+        </div>
     {:else}
-        <MaterialButton variant="contained" disabled={!openedInteraction.inputs.length} style="background-color: green;" on:click={start}>
-            <T id="Start/Open" />
-        </MaterialButton>
+        <div class="inputs">
+            {#if inputIndex === -1}<div style="border: 1px solid var(--secondary);"></div>{/if}
+            <!-- <div style="border: 1px solid {inputIndex === -1 ? 'var(--secondary)' : 'transparent'};"></div> -->
+
+            {#each openedInteraction?.inputs || [] as input, i}
+                <InputRow arrow={activeInteractions.includes(openedId) && Object.keys(answers[i] || {}).length > 0}>
+                    <div
+                        class="input {activeInteractions.includes(openedId) ? '' : 'context #interaction_input'}"
+                        class:active={activeInteractions.includes(openedId) && i === inputIndex}
+                        style="width: 100%;"
+                        id="#{i}"
+                        data-title="Go to this input"
+                        on:click={(e) => {
+                            if (activeInteractions.includes(openedId)) {
+                                getInteraction(openedId)?.goto(i)
+                                return
+                            }
+
+                            if (e.target?.closest(".rearrange")) return
+
+                            popupData.set({ id: openedId, inputIndex: i })
+                            activePopup.set("interaction_input")
+                        }}
+                        role="none"
+                    >
+                        <Icon id={input.type === "heading" ? "info" : input.type} size={1.5} gradient />
+                        {#if input.inputType && input.inputType !== "none"}
+                            <Icon id={inputTypeIcons[input.inputType]} white />
+                        {/if}
+
+                        <p style="flex: 1;{input.question ? '' : 'font-style: italic;opacity: 0.7;'}">
+                            {input.question || translateText("main.unnamed")}
+                        </p>
+
+                        {#if activeInteractions.includes(openedId)}
+                            {#if input.type === "heading"}
+                                <!-- show nothing -->
+                            {:else}
+                                <!-- timer -->
+                                {#if i === inputIndex}
+                                    <span style="font-family: monospace; opacity: 0.8; margin-right: 8px;" class:closed>
+                                        {#if closed}
+                                            CLOSED
+                                        {:else if openedInteraction?.options?.maxTime && openedInteraction.options.maxTime > 0}
+                                            {formatTime(openedInteraction.options.maxTime - seconds)}
+                                        {:else}
+                                            {formatTime(seconds)}
+                                        {/if}
+                                    </span>
+                                {/if}
+
+                                <!-- answers count -->
+                                <span style="font-family: monospace; opacity: 0.7;">
+                                    {Object.keys(answers[i] || {}).length || 0}
+                                </span>
+                            {/if}
+                        {:else}
+                            <span>
+                                <MaterialButton class="rearrange" disabled={i === openedInteraction?.inputs.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeInputs("forward", i)} />
+                                <MaterialButton class="rearrange" disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeInputs("backward", i)} />
+                            </span>
+                        {/if}
+                    </div>
+
+                    <div slot="menu">
+                        {#each Object.entries(answers[i] || {}).sort((a, b) => (a[1]?.time || 0) - (b[1]?.time || 0)) as [clientId, answerValue]}
+                            <p style="display: flex; gap: 8px;padding: 4px 8px;">
+                                <span style="font-weight: bold; opacity: 0.9;">{clients[clientId]?.name || `User #${Object.keys(clients).indexOf(clientId) + 1}`}:</span>
+                                <span style="flex: 1;{isCorrect(input, answerValue?.value) ? 'color: #31ed31; font-weight: bold;' : ''}">{answerValue?.value}</span>
+
+                                {#if startTime && answerValue?.time}
+                                    <span style="font-family: monospace; opacity: 0.7;">
+                                        {Math.max(0, (answerValue.time - startTime) / 1000).toFixed(1)}s
+                                    </span>
+                                {/if}
+                            </p>
+                        {/each}
+                    </div>
+                </InputRow>
+            {/each}
+
+            {#if !activeInteractions.includes(openedId)}
+                <MaterialButton variant="outlined" icon="add" on:click={addInput}>
+                    <T id="interaction.add_input" />
+                </MaterialButton>
+            {/if}
+        </div>
+
+        {#if activeInteractions.includes(openedId)}
+            <FloatingInputs side="left">
+                <MaterialButton
+                    icon="stop"
+                    on:click={async () => {
+                        await stopInteraction(openedId)
+                        activeInteractions = getActiveInteractions()
+                    }}
+                    white
+                    red
+                >
+                    <T id="media.stop" />
+                </MaterialButton>
+            </FloatingInputs>
+
+            <FloatingInputs side="right">
+                <!-- go to next/previous index -->
+                <MaterialButton disabled={inputIndex < 0} title="media.previous" on:click={() => getInteraction(openedId)?.previous()}>
+                    <Icon size={1.3} id="previous" white />
+                </MaterialButton>
+
+                {#if hasAnswer(openedInteraction?.inputs[inputIndex]) && !currentAnswer}
+                    <div class="divider" />
+                    <MaterialButton on:click={() => getInteraction(openedId)?.revealAnswer()}>
+                        <!-- <Icon size={1.3} id="next" white /> -->
+                        <T id="interaction.reveal_answer" />
+                    </MaterialButton>
+                {:else}
+                    <MaterialButton disabled={inputIndex === (openedInteraction?.inputs?.length || 0) - 1} title="media.next" on:click={() => getInteraction(openedId)?.next()}>
+                        <Icon size={1.3} id="next" white />
+                    </MaterialButton>
+                {/if}
+            </FloatingInputs>
+        {:else}
+            <FloatingInputs side="left" gradient>
+                <MaterialButton icon="play" disabled={!(openedInteraction?.inputs?.length || 0)} on:click={start} white>
+                    <T id="inputs.start" />
+                </MaterialButton>
+            </FloatingInputs>
+        {/if}
+    {/if}
+
+    {#if !activeInteractions.includes(openedId)}
+        <FloatingInputs round>
+            <MaterialButton isActive={showOptions} title="create_show.more_options" on:click={() => (showOptions = !showOptions)}>
+                <Icon size={1.1} id="options" white={!showOptions} />
+            </MaterialButton>
+        </FloatingInputs>
     {/if}
 {:else}
     <div class="interactions">
@@ -213,6 +367,7 @@
             <SelectElem id="interaction" data={{ id: interaction.id }}>
                 <div
                     class="interaction context #interaction"
+                    class:active={activeInteractions.includes(interaction.id)}
                     on:click={(e) => {
                         if (e.target?.closest(".edit")) return
                         openedInteractionId.set(interaction.id)
@@ -230,14 +385,14 @@
     <FloatingInputs onlyOne>
         <MaterialButton
             icon="add"
-            title="new.create"
+            title="new.interaction"
             on:click={() => {
                 // selected.set({ id: null, data: [] })
                 // activePopup.set("interaction")
                 createNew()
             }}
         >
-            {#if !$labelsDisabled}<T id="new.create" />{/if}
+            {#if !$labelsDisabled}<T id="new.interaction" />{/if}
         </MaterialButton>
     </FloatingInputs>
 {/if}
@@ -271,6 +426,10 @@
 
         cursor: pointer;
     }
+    .interaction.active {
+        outline: 2px solid var(--secondary);
+        outline-offset: -2px;
+    }
 
     .header {
         flex-shrink: 0;
@@ -282,6 +441,13 @@
         padding: 4px;
 
         border-bottom: 1px solid var(--primary);
+    }
+
+    .options {
+        padding: 10px;
+
+        display: flex;
+        flex-direction: column;
     }
 
     .inputs {
@@ -298,6 +464,7 @@
         align-items: center;
         gap: 8px;
 
+        min-height: 47px;
         padding: 4px 8px;
 
         background-color: var(--primary-darkest);
@@ -306,5 +473,32 @@
     }
     .input:hover {
         background-color: var(--primary-darker);
+    }
+
+    .input.active {
+        outline: 2px solid var(--secondary);
+        outline-offset: -2px;
+    }
+
+    span.closed {
+        color: #ff4444;
+        font-weight: bold;
+    }
+
+    .players {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background-color: var(--primary-darker);
+        padding: 4px;
+        margin-bottom: 8px;
+    }
+
+    .player {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        background-color: var(--primary-darkest);
     }
 </style>

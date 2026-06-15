@@ -56,23 +56,65 @@ class Interaction {
     dbid: string
     dbsecret: string
     inputIndex: number = -1
+    currentAnswer: any = null
+    closed: boolean = false
+    seconds: number = 0
+    startTime: number = 0
+    private timer: any = null
     private unsubscribe: (() => void) | null = null
-    private callbacks: ((data: { answers: any; clients: any }) => void)[] = []
-    private lastData: { answers: any; clients: any } | null = null
+    private callbacks: ((data: { answers: any; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void)[] = []
+    private tickCallbacks: ((data: { seconds: number; startTime: number; closed: boolean }) => void)[] = []
+    private lastData: { answers: any; clients: any; currentAnswer: any; inputIndex: number; closed: boolean } | null = null
 
     constructor(id: string) {
         this.id = id
     }
 
-    onUpdate(callback: (data: { answers: any; clients: any }) => void) {
+    onUpdate(callback: (data: { answers: any; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void) {
         this.callbacks.push(callback)
         if (this.lastData !== null) {
             callback(this.lastData)
         }
     }
 
+    onTick(callback: (data: { seconds: number; startTime: number; closed: boolean }) => void) {
+        this.tickCallbacks.push(callback)
+        callback({ seconds: this.seconds, startTime: this.startTime, closed: this.closed })
+    }
+
     private getData() {
         return get(interactions)[this.id]
+    }
+
+    private startTimer() {
+        if (this.timer) clearInterval(this.timer)
+        this.timer = setInterval(async () => {
+            this.seconds++
+
+            const data = this.getData()
+            const maxTime = data.options?.maxTime ?? 0
+            if (maxTime > 0 && this.seconds >= maxTime) {
+                this.closed = true
+                this.stopTimer()
+                this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, closed: this.closed }))
+                if (this.lastData) {
+                    this.lastData.closed = true
+                    this.callbacks.forEach((cb) => cb(this.lastData!))
+                }
+
+                const updatePayload = this.getDbPayload()
+                await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
+            } else {
+                this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, closed: this.closed }))
+            }
+        }, 1000)
+    }
+
+    private stopTimer() {
+        if (this.timer) {
+            clearInterval(this.timer)
+            this.timer = null
+        }
     }
 
     // Helper to format data for DB pushes
@@ -81,12 +123,18 @@ class Interaction {
         return {
             lastUpdate: Date.now(),
             public: {
-                options: { requireName: true },
+                options: {
+                    requireName: data.options?.requireName ?? true,
+                    maxTime: data.options?.maxTime ?? 0
+                },
                 name: data.name,
                 inputIndex: this.inputIndex,
                 inputCount: data.inputs.length,
+                startTime: this.startTime,
+                closed: this.closed,
                 // If inputIndex is valid, upload the specific input data, otherwise null
-                currentInput: this.inputIndex >= 0 && data.inputs[this.inputIndex] ? data.inputs[this.inputIndex] : null
+                currentInput: this.inputIndex >= 0 && data.inputs[this.inputIndex] ? data.inputs[this.inputIndex] : null,
+                currentAnswer: this.currentAnswer
             }
         }
     }
@@ -110,11 +158,23 @@ class Interaction {
                     // recover existing state
                     if (existingData.public?.inputIndex !== undefined) {
                         this.inputIndex = existingData.public.inputIndex
+                        if (this.inputIndex >= 0) {
+                            this.startTime = existingData.public.startTime || Date.now()
+                            this.closed = existingData.public.closed || false
+                            this.seconds = Math.floor((Date.now() - this.startTime) / 1000)
+                            if (!this.closed) this.startTimer()
+                        }
+                    }
+                    if (existingData.public?.currentAnswer !== undefined) {
+                        this.currentAnswer = existingData.public.currentAnswer
                     }
                     if (existingData.answers || existingData.clients) {
                         this.lastData = {
-                            answers: existingData.answers || {},
-                            clients: existingData.clients || {}
+                            answers: existingData.answers || [],
+                            clients: existingData.clients || {},
+                            currentAnswer: this.currentAnswer,
+                            inputIndex: this.inputIndex,
+                            closed: this.closed
                         }
                     }
 
@@ -149,9 +209,14 @@ class Interaction {
 
         this.unsubscribe = subscribeInteraction(this.dbid, this.dbsecret, (raw) => {
             if (raw) {
+                this.currentAnswer = raw.public?.currentAnswer || null
+                this.closed = raw.public?.closed || false
                 const data = {
-                    answers: raw.answers || {},
-                    clients: raw.clients || {}
+                    answers: raw.answers || [],
+                    clients: raw.clients || {},
+                    currentAnswer: this.currentAnswer,
+                    inputIndex: raw.public?.inputIndex ?? -1,
+                    closed: this.closed
                 }
                 this.lastData = data
                 this.callbacks.forEach((cb) => cb(data))
@@ -165,6 +230,8 @@ class Interaction {
     }
 
     async destroy() {
+        this.stopTimer()
+
         if (this.unsubscribe) {
             this.unsubscribe()
             this.unsubscribe = null
@@ -175,9 +242,28 @@ class Interaction {
         await deleteInteractionDb(this.dbid, this.dbsecret)
     }
 
+    private resetTimer() {
+        if (this.inputIndex >= 0) {
+            this.seconds = 0
+            this.startTime = Date.now()
+            this.closed = false
+            this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, closed: this.closed }))
+            this.startTimer()
+        } else {
+            this.stopTimer()
+            this.seconds = 0
+            this.startTime = 0
+            this.closed = false
+            this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, closed: this.closed }))
+        }
+    }
+
     async previous() {
         if (this.inputIndex < 0) return // allow -1
         this.inputIndex--
+        this.currentAnswer = null
+
+        this.resetTimer()
 
         // Sync the updated index and current input to Firebase
         const updatePayload = this.getDbPayload()
@@ -189,10 +275,67 @@ class Interaction {
         // Prevent going out of bounds
         if (this.inputIndex < data.inputs.length - 1) {
             this.inputIndex++
+            this.currentAnswer = null
+
+            this.resetTimer()
 
             // Sync the updated index and current input to Firebase
             const updatePayload = this.getDbPayload()
             await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
         }
+    }
+
+    async goto(index: number) {
+        const data = this.getData()
+        if (index < 0 || index >= data.inputs.length) return
+
+        this.inputIndex = index
+        this.currentAnswer = null
+
+        this.resetTimer()
+
+        const updatePayload = this.getDbPayload()
+        await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
+    }
+
+    async revealAnswer() {
+        const data = this.getData()
+        const input = data.inputs[this.inputIndex]
+        if (!input) return
+
+        if (input.type === "text" || input.type === "number") {
+            this.currentAnswer = input.answer
+        } else if (input.type === "multi_choice") {
+            this.currentAnswer = input.options?.filter((o: any) => o.isAnswer).map((o: any) => o.value)
+        }
+
+        if (!this.currentAnswer) return
+        this.closed = true
+
+        const updatePayload = this.getDbPayload()
+        await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
+    }
+
+    async kick(clientId: string) {
+        // Prepare payload to remove client and their answers
+        const updatePayload: any = {
+            [`clients/${clientId}`]: null
+        }
+
+        // If answers exist, remove the specific client's answer from each input
+        if (this.lastData?.answers) {
+            const currentAnswers = this.lastData.answers
+            const isArray = Array.isArray(currentAnswers)
+
+            if (isArray) {
+                updatePayload.answers = currentAnswers.map((ans: any) => {
+                    const newAns = { ...ans }
+                    delete newAns[clientId]
+                    return newAns
+                })
+            }
+        }
+
+        await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
     }
 }

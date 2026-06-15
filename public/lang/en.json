@@ -623,7 +623,8 @@
         "action": "New action",
         "event": "New event",
         "event_action": "New scheduled action",
-        "effect": "New effect"
+        "effect": "New effect",
+        "interaction": "New interaction"
     },
     "show": {
         "name": "Name",
@@ -1661,6 +1662,31 @@
         "drift": "Drift",
         "pulse_speed": "Pulse speed",
         "hollow": "Hollow"
+    },
+    "interaction": {
+        "add_input": "Add input",
+        "add_option": "Add option",
+        "multi_choice": "Multiple choice",
+        "heading": "Heading",
+        "option": "Option",
+        "question": "Question",
+        "answer": "Answer",
+        "mark_as_correct": "Mark as correct",
+        "mark_as_incorrect": "Mark as incorrect",
+        "reveal_answer": "Reveal answer",
+        "optional": "Optional",
+        "min": "Min",
+        "max": "Max",
+        "input": "Input",
+        "buttons": "Buttons",
+        "checkboxes": "Checkboxes",
+        "radio_buttons": "Radio buttons",
+        "dropdown": "Dropdown",
+        "slider": "Slider",
+        "range": "Range",
+        "kick": "Kick",
+        "require_name": "Request names",
+        "max_time": "Max time per input"
     },
     "info": {
         "created": "Created",

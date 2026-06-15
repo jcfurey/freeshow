@@ -13,28 +13,32 @@
 
     let chosenType = ""
     const types = [
-        { id: "multi_choice", name: "Multiple choice", icon: "multi_choice" },
+        { id: "multi_choice", name: translateText("interaction.multi_choice"), icon: "multi_choice" },
         { id: "text", name: translateText("variables.text"), icon: "text" },
-        { id: "number", name: translateText("variables.number"), icon: "number" }
+        { id: "number", name: translateText("variables.number"), icon: "number" },
+        { id: "heading", name: translateText("interaction.heading"), icon: "info" }
     ]
 
     let chosenInputType = ""
     const inputTypes = {
         multi_choice: [
-            { id: "buttons", name: "Buttons", icon: "grid" },
-            { id: "checkbox", name: "Checkboxes", icon: "checkbox" },
-            { id: "radio", name: "Radio buttons", icon: "radio_button" },
-            { id: "dropdown", name: "Dropdown", icon: "dropdown" }
+            { id: "buttons", name: translateText("interaction.buttons"), icon: "grid" },
+            { id: "checkbox", name: translateText("interaction.checkboxes"), icon: "checkbox" },
+            { id: "radio", name: translateText("interaction.radio_buttons"), icon: "radio_button" },
+            { id: "dropdown", name: translateText("interaction.dropdown"), icon: "dropdown" }
         ],
         text: [
             // just text input (for now)
-            { id: "input", name: "Input", icon: "keyboard" }
+            { id: "input", name: translateText("interaction.input"), icon: "keyboard" }
         ],
         number: [
-            { id: "input", name: "Input", icon: "keyboard" },
-            { id: "slider", name: "Slider", icon: "slider" },
-            { id: "number_range", name: "Range", icon: "ruler" }
+            { id: "input", name: translateText("interaction.input"), icon: "keyboard" },
+            { id: "slider", name: translateText("interaction.slider"), icon: "slider" },
+            { id: "number_range", name: translateText("interaction.range"), icon: "ruler" }
             // { id: "time_range", name: "Time range", icon: "ruler" }
+        ],
+        heading: [
+            // { id: "none" }
         ]
     }
 
@@ -52,9 +56,9 @@
         currentInput[key] = value
 
         // just "input" for "text" type (for now)
-        if (key === "type" && chosenType === "text") {
-            chosenInputType = "input"
-            updateValue("input", "inputType")
+        if (key === "type" && inputTypes[chosenType]?.length < 2) {
+            chosenInputType = inputTypes[chosenType]?.[0]?.id || "none"
+            updateValue(chosenInputType, "inputType")
         }
 
         if (key === "type" || key === "inputType") return
@@ -109,20 +113,20 @@
             iconSize={1.3}
             title="actions.back"
             on:click={() => {
-                if (chosenType === "text") chosenType = ""
+                if (inputTypes[chosenType]?.length < 2) chosenType = ""
                 chosenInputType = ""
             }}
         />
     {/if}
 
-    <MaterialTextInput label="Question" style="margin-bottom: 10px;" value={currentInput.question} on:change={(e) => updateValue(e.detail, "question")} autofocus={!currentInput.question} />
+    <MaterialTextInput label={currentInput.type === "heading" ? "interaction.heading" : "interaction.question"} style={currentInput.type === "heading" ? "" : "margin-bottom: 10px;"} value={currentInput.question} on:change={(e) => updateValue(e.detail, "question")} autofocus={!currentInput.question} />
 
     {#if currentInput.type === "multi_choice"}
         <div class="options">
             {#each currentInput.options || [] as option, i}
                 <InputRow>
                     <MaterialTextInput
-                        label="Option"
+                        label="interaction.option"
                         value={option?.value}
                         on:change={(e) => {
                             if (!currentInput.options) currentInput.options = []
@@ -135,7 +139,7 @@
                         autofocus={!!currentInput.question && !option?.value}
                     />
                     <MaterialButton
-                        title={option?.isAnswer ? "Mark as incorrect answer" : "Mark as correct answer"}
+                        title={option?.isAnswer ? "interaction.mark_as_incorrect" : "interaction.mark_as_correct"}
                         icon={option?.isAnswer ? "check" : "close"}
                         iconSize={1.2}
                         style={option?.isAnswer ? "background-color: var(--connected) !important;" : "background-color: var(--red) !important;"}
@@ -150,6 +154,7 @@
                     />
                     <MaterialButton
                         icon="delete"
+                        title="actions.remove"
                         on:click={() => {
                             if (!currentInput.options) currentInput.options = []
                             currentInput.options.splice(i, 1)
@@ -172,20 +177,20 @@
                     updateInput()
                 }}
             >
-                <T id="New option" />
+                <T id="interaction.add_option" />
             </MaterialButton>
 
             <!-- TIP order will be random -->
         </div>
     {:else if currentInput.type === "text"}
         <!-- optional - for polls we don't need answers -->
-        <MaterialTextInput label="Answer" value={currentInput.answer || ""} on:change={(e) => updateValue(e.detail, "answer")} />
+        <MaterialTextInput label="interaction.answer (interaction.optional)" value={currentInput.answer || ""} on:change={(e) => updateValue(e.detail, "answer")} />
     {:else if currentInput.type === "number"}
-        <MaterialNumberInput label="Answer" type="number" value={currentInput.answer} on:change={(e) => updateValue(e.detail, "answer")} />
+        <MaterialNumberInput label="interaction.answer (interaction.optional)" type="number" value={currentInput.answer} on:change={(e) => updateValue(e.detail, "answer")} />
 
         <InputRow>
-            <MaterialNumberInput label="Min" type="number" value={currentInput.min ?? 0} min={-10000000} on:change={(e) => updateValue(e.detail, "min")} />
-            <MaterialNumberInput label="Max" type="number" value={currentInput.max ?? 1000} max={10000000} on:change={(e) => updateValue(e.detail, "max")} />
+            <MaterialNumberInput label="interaction.min" type="number" value={currentInput.min ?? 0} min={-10000000} on:change={(e) => updateValue(e.detail, "min")} />
+            <MaterialNumberInput label="interaction.max" type="number" value={currentInput.max ?? 1000} max={10000000} on:change={(e) => updateValue(e.detail, "max")} />
         </InputRow>
     {/if}
 {/if}
