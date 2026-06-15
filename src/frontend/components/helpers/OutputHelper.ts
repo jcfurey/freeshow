@@ -370,7 +370,6 @@ export class OutputHelper {
         return layoutRef[data.index] ? { layout: data.layout, index: data.index, ...outSlideData } : null
     }
 
-    // skip slides that are bound to specific output not customId
     private static slideCannotBeOutputted(outputId: string, ref: LayoutRef) {
         if (!ref) return false // should always exist - but this breaks the loop if not
 
