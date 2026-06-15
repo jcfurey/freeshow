@@ -789,6 +789,7 @@
         "archive_title": "Archive",
         "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
         "delete_empty_shows": "Delete empty shows",
+        "rebuild_search_cache": "Rebuild search index (lyrics)",
         "export_usage_log": "Export usage log",
         "reset_usage_log": "Reset usage log",
         "open_log_file": "Open log file",

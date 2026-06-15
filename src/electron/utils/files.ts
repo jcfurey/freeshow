@@ -1234,6 +1234,7 @@ export function loadShows(returnShows = false, reCacheNames: string[] = []) {
     const cachedShows = getStore("SHOWS") || {}
     const newCachedShows: TrimmedShows = {}
     const textCache: { [key: string]: string } = {}
+    const existingCacheText: { [key: string]: string } = getStore("CACHE")?.text || {}
 
     // create a map for quick lookup of cached shows by name
     const cachedShowNames = new Map<string, string>()
@@ -1251,6 +1252,12 @@ export function loadShows(returnShows = false, reCacheNames: string[] = []) {
         const matchingShowId = cachedShowNames.get(name)
         if (matchingShowId && !newCachedShows[matchingShowId]) {
             newCachedShows[matchingShowId] = cachedShows[matchingShowId]
+            // backfill: build text for an already-cached show that was never text-cached (e.g. it existed before the text cache)
+            if (!existingCacheText[matchingShowId]) {
+                const cachedShowData = parseShow(readFile(path.join(showsPath, `${name}.show`)) || "{}")
+                const cachedTxt = cachedShowData?.[1] ? getTextCacheString(cachedShowData[1]) : ""
+                if (cachedTxt) textCache[matchingShowId] = cachedTxt
+            }
             return
         }
 
@@ -1302,6 +1309,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
     const cachedShows = getStore("SHOWS") || {}
     const newCachedShows: TrimmedShows = {}
     const textCache: { [key: string]: string } = {}
+    const existingCacheText: { [key: string]: string } = getStore("CACHE")?.text || {}
 
     // send already cached shows to the frontend immediately
     if (!returnShows && !reCacheNames.length && Object.keys(cachedShows).length) {
@@ -1324,6 +1332,13 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
                 const matchingShowId = cachedShowNames.get(name)
                 if (matchingShowId && !newCachedShows[matchingShowId]) {
                     newCachedShows[matchingShowId] = cachedShows[matchingShowId]
+                    // backfill: build text for an already-cached show that was never text-cached
+                    if (!existingCacheText[matchingShowId]) {
+                        hadIo = true
+                        const cachedShowData = parseShow((await readFileAsync(path.join(showsPath, `${name}.show`))) || "{}")
+                        const cachedTxt = cachedShowData?.[1] ? getTextCacheString(cachedShowData[1]) : ""
+                        if (cachedTxt) textCache[matchingShowId] = cachedTxt
+                    }
                     return
                 }
 
@@ -1365,6 +1380,36 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
 }
 
 // same as frontend setShow.ts
+// Force a full rebuild of every show's text/lyric search cache (manual maintenance action).
+// Reads all .show files and keys the cache by the SHOWS-store id so it matches what search looks up.
+export function rebuildShowTextCache() {
+    const showsPath = getDataFolderPath("shows")
+    const files = readFolder(showsPath)
+        .filter((name) => name.toLowerCase().endsWith(".show"))
+        .map((name) => name.slice(0, -5))
+        .filter(Boolean)
+
+    const cachedShows = getStore("SHOWS") || {}
+    const nameToId = new Map<string, string>()
+    for (const [id, show] of Object.entries(cachedShows)) {
+        if ((show as { name?: string })?.name) nameToId.set((show as { name: string }).name, id)
+    }
+
+    const textCache: { [key: string]: string } = {}
+    for (const name of files) {
+        const show = parseShow(readFile(path.join(showsPath, `${name}.show`)) || "{}")
+        if (!show?.[1]) continue
+        const id = nameToId.get(name) || show[0]
+        const txt = getTextCacheString(show[1])
+        if (txt) textCache[id] = txt
+    }
+
+    const cache = getStore("CACHE")
+    cache.text = textCache
+    setStore(_store.CACHE, cache)
+    sendMain(Main.CACHE, cache)
+}
+
 function getTextCacheString(show: Show) {
     if (!show?.slides || show?.reference?.type) return ""
 
