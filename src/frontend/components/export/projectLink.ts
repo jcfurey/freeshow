@@ -4,7 +4,7 @@ import { overlays, playerVideos, showsCache } from "../../stores"
 import { newToast } from "../../utils/common"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
-import { LinkGenericItem, LinkOverlayItem, LinkShowItem, LinkSlide, LinkSlideGenericItem, LinkSlideItems, LinkSlideLine, LinkSlideMediaItem, LinkSlideTextItem, ProjectLink } from "./ProjectLinkTypes"
+import type { LinkGenericItem, LinkOverlayItem, LinkShowItem, LinkSlide, LinkSlideGenericItem, LinkSlideItems, LinkSlideLine, LinkSlideMediaItem, LinkSlideTextItem, ProjectLink } from "./ProjectLinkTypes"
 
 export async function exportProjectAsData(project: Project, projectId: string): Promise<ProjectLink | null> {
     if (!project) return null
