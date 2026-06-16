@@ -11,7 +11,8 @@ All seven open as PRs against upstream **`dev`**.
 | PR | Upstream PR | Status |
 |----|-------------|--------|
 | 1 | `ChurchApps/FreeShow#3384` | open |
-| 2–7 | — | not opened yet |
+| 2 | `ChurchApps/FreeShow#3385` | open |
+| 3–7 | — | not opened yet |
 
 ## Submission strategy
 
@@ -102,6 +103,8 @@ Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-se
 **Title:** `Migrate to Svelte 5 + Vite 8 + TypeScript 5 (compatibility mode)`
 
 **Body:**
+> 🔗 **Stacked on #3385** (ESLint 9 + safe-eval). Until it merges, the diff below also includes PR1+PR2's changes; GitHub collapses it once they land.
+>
 > Upgrades the frontend stack to **Svelte 5 / Vite 8 / TypeScript 5** in compatibility mode (no rune rewrite), preserving pre-migration type strictness so this PR stays a framework bump rather than a type overhaul (that's PR5).
 >
 > **Included:**
@@ -111,9 +114,11 @@ Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-se
 > - `ACCESSIBILITY.md` (scope/roadmap for operator-UI keyboard a11y) and per-platform `BUILDING.md`
 > - `Dockerfile` + `.dockerignore` for a reproducible Linux build; switch CI to `npm ci`
 >
-> **Verification:** `svelte-check` passes (0 errors; remaining warnings are the documented a11y roadmap items).
+> **Verification:** production build (`npm run build`) and the Playwright smoke test pass.
 >
-> *Note:* two `|global` output-transition regressions from this migration are fixed in PR6 (build-and-regression-fixes).
+> **Follow-ups (kept out of this framework bump by design):**
+> - `svelte-check` reports ~76 migration type errors at this stage; they're resolved in the strict-mode PR (PR5). Note: `svelte-check` is not part of upstream CI.
+> - Two `|global` output-transition regressions from this migration are fixed in PR6.
 
 ---
 
