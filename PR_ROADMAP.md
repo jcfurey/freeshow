@@ -13,7 +13,8 @@ All seven open as PRs against upstream **`dev`**.
 | 1 | `ChurchApps/FreeShow#3384` | open |
 | 2 | `ChurchApps/FreeShow#3385` | open |
 | 3 | `ChurchApps/FreeShow#3386` | open |
-| 4–7 | — | not opened yet |
+| 4 | `ChurchApps/FreeShow#3387` | open |
+| 5–7 | — | not opened yet |
 
 ## Submission strategy
 
@@ -148,6 +149,8 @@ Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-se
 **Title:** `Enable TypeScript strict mode across frontend, electron, and server`
 
 **Body:**
+> 🔗 **Stacked on #3387** (vitest suite). This PR **clears the ~76 Svelte 5 migration type errors** deferred from PR3/PR4 and completes strict mode.
+>
 > Builds on the Svelte 5 migration to re-enable and complete **TypeScript strict mode**.
 >
 > - Resolve the remaining Svelte 5 migration type errors (`svelte-check` → 0)
@@ -156,7 +159,7 @@ Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-se
 >
 > Mostly type annotations and safe casts (`+410 / −415`), no runtime behavior change.
 >
-> **Verification:** `svelte-check`, electron `tsc`, and server `tsc` all clean.
+> **Verification:** `svelte-check` (0 errors), electron `tsc`, and server `tsc` all clean.
 
 ---
 
