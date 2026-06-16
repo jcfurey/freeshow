@@ -25,6 +25,15 @@
     // WIP similar to SlideContent.svelte
     let timeout: NodeJS.Timeout | null = null
     function updateItems() {
+        // No transition (e.g. scripture metadata, transition "none"): swap synchronously so the layer
+        // doesn't blank/remount for a frame — this is the metadata-flash-during-blanks fix (#2451).
+        if (!transitionEnabled) {
+            if (timeout) clearTimeout(timeout)
+            currentItems = clone(overlay.items || [])
+            show = true
+            return
+        }
+
         show = false
 
         // wait for previous items to start fading out (svelte will keep them until the transition is done!)
