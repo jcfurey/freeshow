@@ -67,8 +67,13 @@
     // Compare two items to see if their visible content is identical
     function itemsAreEqual(oldItem: Item | undefined, newItem: Item | undefined): boolean {
         if (!oldItem || !newItem) return false
-        // Compare the full serialized content (lines, style, etc.)
-        return JSON.stringify(oldItem) === JSON.stringify(newItem)
+        // Compare content but ignore volatile auto-size measurement fields, so an unchanged textbox
+        // stays "persistent" between slides (no needless re-mount / fade on identical text).
+        const normalize = (item: Item) => {
+            const { autoFontSize, previewAutoFontSize, ...rest } = item as Item & { autoFontSize?: number; previewAutoFontSize?: number }
+            return JSON.stringify(rest)
+        }
+        return normalize(oldItem) === normalize(newItem)
     }
     // maintain a hidden workload that primes autosize results ahead of the visible reveal
     let precomputeTargets: { item: Item; index: number; key: string }[] = []
@@ -260,6 +265,24 @@
             // Keep currentItems in sync but don't toggle show
             currentItems = clone(currentSlide.items || [])
             transitioningBetween = false
+            return
+        }
+
+        // No real transition (duration 0 / "none"): swap synchronously instead of cycling `show` through
+        // false (which blanks the {#key} block for a frame — the "None" black flash). Mirrors the
+        // all-persistent early-return above, but for changed content. Don't bump transitionId (no remount).
+        if (currentTransitionDuration === 0) {
+            ++updateGeneration // invalidate any in-flight show=false → show=true cycle
+            currentItems = clone(currentSlide.items || [])
+            current = {
+                outSlide: clone(outSlide),
+                slideData: clone(slideData),
+                currentSlide: clone(currentSlide),
+                lines: clone(lines),
+                currentStyle: clone(currentStyle)
+            }
+            transitioningBetween = false
+            show = true
             return
         }
 
