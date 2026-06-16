@@ -117,6 +117,22 @@ All seven triaged at open: **0 comments, no reviews, no merge conflicts** on eve
 
 ---
 
+## Additional feature — "Protect Bible text from editing" (NOT part of the modernization)
+
+A standalone enhancement spun out of #3366 (Advanced Bible Engine request) + the user's concern that letting downloaded/API scripture be silently edited and re-projected invites objection.
+
+- **Branch:** `feature/protect-scripture-text` (off `upstream/dev`) — pushed. Also cherry-picked onto `dev` (`07a9842`, `svelte-check` 0). **PR not opened yet.**
+- **Compare:** `https://github.com/ChurchApps/FreeShow/compare/dev...jcfurey:freeshow:feature/protect-scripture-text`
+- **Title:** `Protect Bible text from accidental edits (scripture shows read-only by default)`
+- **What it does:** verse text in Bible-sourced shows (`reference.type === "scripture"`) is read-only in the editor by default; styling/layout/templates/verse-number options stay editable — only the words lock.
+  - Global setting `special.protectScriptureText` (default on) — Settings → General.
+  - Per-show unlock `show.unlockedScriptureText` — edit-header "more options" (⋯) dropdown.
+  - Reuses the existing `EditboxLines` `isLocked` read-only render (Editbox passes `isLocked || scriptureTextLocked`) — **no new text-mutation paths**. 5 files, +24/−1.
+- **Open decision:** currently locks **all** scripture shows; can narrow to **API-only** (`reference.data.api`) after runtime testing — pending the user's QA.
+- **Strategic:** an 8th PR while the 7 modernization PRs are still unreviewed, and a behavior change — consider holding until @vassbo engages, or leading with a comment on #3366.
+
+---
+
 ## PR 1 — Security & dependency hardening
 **Branch:** `split/1-deps-and-security` → **base:** `dev` · independent (open now) · 10 commits
 
