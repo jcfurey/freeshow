@@ -12,7 +12,8 @@ All seven open as PRs against upstream **`dev`**.
 |----|-------------|--------|
 | 1 | `ChurchApps/FreeShow#3384` | open |
 | 2 | `ChurchApps/FreeShow#3385` | open |
-| 3–7 | — | not opened yet |
+| 3 | `ChurchApps/FreeShow#3386` | open |
+| 4–7 | — | not opened yet |
 
 ## Submission strategy
 
@@ -128,7 +129,9 @@ Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-se
 **Title:** `Add a vitest unit-test suite for helpers and import converters`
 
 **Body:**
-> Adds a **vitest** unit-test layer — almost entirely new files (`+3153 / −3`), no behavioral changes.
+> 🔗 **Stacked on #3386** (Svelte 5 migration). Inherits PR3's deferred follow-ups (type errors → PR5, transitions → PR6).
+>
+> Adds a **vitest** unit-test layer — almost entirely new files (`+3153 / −3`, plus vitest/jsdom dev-deps), no behavioral changes. **251 tests pass** at this branch.
 >
 > **Coverage:**
 > - Pure helpers: expression, color, scripture, chord transpose, bytes, style, cropping, mover, clickable, languageData, array, time
