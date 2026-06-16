@@ -42,7 +42,7 @@ upstream/dev ─┬─ PR1 ─ PR2 ─ PR3 ─ PR4 ─ PR5 ─ PR6
 | 3 | `split/3-svelte5-vite8` | `fa4797d` | PR2 | 10 | 139 files (+4162 / −2620) |
 | 4 | `split/4-unit-test-suite` | `486a43f` | PR3 | 13 | 36 files (+3153 / −3) |
 | 5 | `split/5-typescript-strict` | `ef5dac8` | PR4 | 9 | 175 files (+410 / −415) |
-| 6 | `split/6-build-and-regression-fixes` | `b33ac05` | PR5 | 7 | 38 files (+792 / −677) |
+| 6 | `split/6-build-and-regression-fixes` | `6036b5d` | PR5 | 8 | 40 files (+794 / −679) |
 | 7 | `split/7-search-improvements` | `876117a` | — (upstream/dev) | 3 | 7 files (+285 / −106) |
 
 ## Verification
@@ -95,10 +95,22 @@ All seven triaged at open: **0 comments, no reviews, no merge conflicts** on eve
 2. **"Split the `eslint --fix` autofix"** on #3385 — already offered in the body; carve the autofix into its own PR.
 3. **CI red after approval** — diagnose the added `ci.yml` (#3384) or the build output and push fixes.
 
+## Maintainer concerns (original PR #3379, closed by @vassbo)
+
+**1. "Too mixed / too much for one PR."** → Addressed by this 7-PR split.
+
+**2. "Svelte Transitions are broken in newer versions… create a custom transition system first!" (ref #1512).** The blocker that closed #3379, and the same wall the prior Svelte 5 PR (#1512) hit: transitions **snap to the next frame** instead of animating.
+- **Root cause:** Svelte made transitions **local by default** at the 3→4 boundary (inherited by 5). A local transition doesn't play when a block *above* it (`{#key}`/`{#each}`/`{#if}`) is created/destroyed. FreeShow's output transitions live inside `{#key show}` / `{#each currentOut}`, so they snap. The manual compat migration skipped the `|global` that `svelte-migrate` adds automatically.
+- **Fix (in PR6 / #3389):** `|global` on **all three** output `custom` transitions — `OutputTransition` (text/media/PDF/effect), `Output.svelte` song attribution, `ListView` — plus a keying fix (`{#key transitionId}` not `{#key show}`) so outgoing slide text isn't orphaned. `svelte-check` 0 / build clean.
+- **Caveat:** verified via `svelte-check`/build only — **runtime visual QA still owed** (do slides animate?). Fix kept in PR6 per decision, so PR3 in isolation still snaps until #3389 lands.
+- FreeShow already has a custom transition system (`utils/transitions.ts` `custom()`); the fix makes those existing transitions play again — no new system needed.
+
+**3. Out of scope — transition rework (#2169).** A separate, *pre-existing* (Svelte-4-era) effort the maintainer wants to own: identical-text flash / partial-fade, smoother text transitions. Our work only **restores pre-Svelte-5 behavior** — it deliberately does not touch #2169.
+
 ## Open polish items
 
 - A couple of PR1/PR2 commit messages still reference the now-stripped audit docs ("…from code audit", "…in audit docs"). Cosmetic; reword on request.
-- The two Svelte 5 `|global` transition fixes live in **PR6**, so **PR3/PR4/PR5 ship that transition regression until PR6 merges**. Move them up into PR3 (self-contained migration) on request.
+- Transition fix is **complete** (all 3 output `custom` transitions have `|global`) but lives in **PR6** by decision, so **PR3/PR4/PR5 still snap until PR6 merges**. A drafted comment for #3386 explains the fix + points to #3389.
 
 ---
 
