@@ -78,6 +78,20 @@
                     <p><T id="timeline.toggle_timeline" /></p>
                 </MaterialButton>
 
+                {#if currentShow?.reference?.type === "scripture" && $special.protectScriptureText !== false}
+                    <div class="DIVIDER"></div>
+
+                    <MaterialButton title="edit.unlock_scripture_text_tip" on:click={() => _show(showId).set({ key: "unlockedScriptureText", value: !currentShow?.unlockedScriptureText })}>
+                        <Icon id="lock" white={!currentShow?.unlockedScriptureText} />
+
+                        {#if currentShow?.unlockedScriptureText}
+                            <Icon id="check" size={0.7} white />
+                        {/if}
+
+                        <p><T id="edit.unlock_scripture_text" /></p>
+                    </MaterialButton>
+                {/if}
+
                 <!-- <div class="DIVIDER"></div> -->
 
                 <!-- lock slide group from here? -->

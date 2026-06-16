@@ -178,6 +178,8 @@
     const profile = getAccess("shows")
     $: currentSlide = (ref.type || "show") === "show" ? $showsCache[active || ""]?.slides?.[ref.id] : null // WIP get group slide
     $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || currentSlide?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
+    // SCRIPTURE TEXT PROTECTION: Bible-sourced verse text is read-only unless protection is globally off or this show was explicitly unlocked
+    $: scriptureTextLocked = (ref.type || "show") === "show" && $showsCache[active || ""]?.reference?.type === "scripture" && $special.protectScriptureText !== false && !$showsCache[active || ""]?.unlockedScriptureText
 
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables)
@@ -217,7 +219,7 @@ bind:offsetWidth={width} -->
         <EditboxPlain {item} {index} {ratio} hideMovebox={cropActive} />
     {/if}
     {#if item?.lines && !noTextMode}
-        <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} {isLocked} />
+        <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} isLocked={isLocked || scriptureTextLocked} />
     {:else if previewItem}
         {#if previewItem.type === "media"}
             <div class="mediaFrame" class:showOverflow={cropActive}>
