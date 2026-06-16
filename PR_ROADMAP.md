@@ -45,6 +45,17 @@ After the #3386 reply, @vassbo (2026-06-16): *"Okay, that makes sense. But I wou
 - **Runtime verified (Playwright):** the built Electron app **launches and renders correctly** (screenshot: Welcome dialog, panels, tabs, live clock). The smoke test fails only on **stale selectors** (`.main .dropdownElem`/`.showElem`) — and our `start.test.ts` is byte-identical to upstream/dev's, so it fails on plain `dev` too; the repair lives in the excluded #3384 (`bc61ed0`). Not a migration regression.
 - **@vassbo sequencing (2026-06-16):** *"No need to rush it, but it's probably good to get the other major PRs done and merged first?"* → the migration is **welcome, just sequenced after the foundational PRs**. Plan: **hold the migration PR** (branch is ready & waiting), prioritize landing **#3384 (security/deps)** and any wanted parts of **#3385**, then rebase + open the migration. No urgency.
 
+### ✅ #3390 (search) MERGED into upstream/dev (`3823fb0`)
+The reworked search PR (rebuild button removed per review) **landed**. First modernization PR merged. `upstream/dev` advanced 3f0f455 → 3823fb0.
+
+### ✅ #3384 merge-readiness + svelte-3→5 path verified (2026-06-16)
+Validated the full sequence vassbo wants (land #3384 on Svelte 3, then migration on top):
+- **#3384 merges cleanly** into current `upstream/dev` (no conflicts, even after #3390). Merge adds `.github/workflows/ci.yml`, `.nvmrc`, `.gitattributes`.
+- **#3384 builds on Svelte 3 + Electron 40** (`npm run build` exit 0) and **37 unit tests pass** (search 19 + syncLedger 18). Electron 37→40 does not break the electron `tsc`.
+- **Migration ⊕ #3384 source merges with ZERO source conflicts** — only `package.json`/`package-lock.json` conflict (dep reconciliation, expected).
+- **Full combined stack** (dev + #3384 + migration) **installs and builds clean under Svelte 5** (svelte 5 + vite 8 + Electron 40 + music-metadata 11 + terser 1.0 + npm-run-all2 all coexist; `npm run build` exit 0, 0 MISSING_EXPORT/TS errors) and **37 tests pass**. Dep reconcile on conflict: keep svelte 5 (migration) + #3384's security bumps (`npm-run-all2 ^9`, `tmp ^0.2.7`), drop the Svelte-3-only packages.
+- **Conclusion:** the migration **works from Svelte 3.x (with #3384) → Svelte 5**. When #3384 lands, rebasing + opening the migration is mechanical (validated). Throwaway test branches not pushed.
+
 ## Submission strategy
 
 - **PR1** and **PR7** are rooted directly on `upstream/dev` → independent, open **now, in parallel**.
