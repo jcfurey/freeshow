@@ -39,10 +39,10 @@ upstream/dev ─┬─ PR1 ─ PR2 ─ PR3 ─ PR4 ─ PR5 ─ PR6
 |----|--------|-----|------------|---------|------------------|
 | 1 | `split/1-deps-and-security` | `c53fb58` | — (upstream/dev) | 10 | 23 files (line count = `package-lock.json`, collapsed via `.gitattributes`) |
 | 2 | `split/2-eslint9-and-safe-eval` | `afedf4c` | PR1 | 4 | 298 files (+2390 / −2095) — mostly `eslint --fix` |
-| 3 | `split/3-svelte5-vite8` | `fa4797d` | PR2 | 10 | 139 files (+4162 / −2620) |
-| 4 | `split/4-unit-test-suite` | `486a43f` | PR3 | 13 | 36 files (+3153 / −3) |
-| 5 | `split/5-typescript-strict` | `ef5dac8` | PR4 | 9 | 175 files (+410 / −415) |
-| 6 | `split/6-build-and-regression-fixes` | `6036b5d` | PR5 | 8 | 40 files (+794 / −679) |
+| 3 | `split/3-svelte5-vite8` | `e163a7a` | PR2 | 11 | 138 files (+4161 / −2619) |
+| 4 | `split/4-unit-test-suite` | `049cce0` | PR3 | 13 | 36 files (+3153 / −3) |
+| 5 | `split/5-typescript-strict` | `5a3b6cb` | PR4 | 9 | 175 files (+410 / −415) |
+| 6 | `split/6-build-and-regression-fixes` | `75acba7` | PR5 | 8 | 40 files (+794 / −679) |
 | 7 | `split/7-search-improvements` | `876117a` | — (upstream/dev) | 3 | 7 files (+285 / −106) |
 
 ## Verification
@@ -84,6 +84,7 @@ Restore a branch: `git push --force-with-lease origin origin/backup/split/N-…:
 - **Deferred-by-design.** 76 `svelte-check` migration type errors appear in PR3/PR4 and are cleared in **PR5**. Two `|global` output-transition regressions from the migration are fixed in **PR6**.
 - **Upstream context.** `upstream/dev` already ships a skeleton vitest setup (2 test files) — PR4 expands it (2→253), PR7 builds on it (no new deps). Upstream CI runs **`npm run build` + Playwright only**; `svelte-check`/vitest are **not** CI-gated (`npm run test` is commented out in `playwright.yml`), so PR3's 76 errors won't turn CI red.
 - **Commit authorship.** Commits are authored by `@claude` (several co-authored with `@jcfurey`); no DCO sign-off.
+- **Dev-server regression (found via runtime QA, fixed).** `npm start` was broken on the migrated branches: `public/index.html` had the **production** bundle tag (`./build/bundle.js`) committed — a `postBuild.js setProductionHTML()` artifact accidentally swept into a PR3 a11y commit (`e0011c3`), never reverted by `cleanBuilds.js`. Restored the dev entry (`/src/frontend/main.ts`, matching upstream) on `dev` + PR3, re-stacked PR4–6. PR3's net `index.html` diff is zero (add+revert cancels). **QA lesson:** we'd only run `npm run build` + the automated suites — never `npm start` — so the dev workflow slipped through. Always smoke `npm start` on a Vite migration.
 
 ## PR review status (opened 2026-06-16)
 
