@@ -16,7 +16,9 @@ All seven open as PRs against upstream **`dev`**.
 | 4 | `ChurchApps/FreeShow#3387` | open |
 | 5 | `ChurchApps/FreeShow#3388` | open |
 | 6 | `ChurchApps/FreeShow#3389` | open |
-| 7 | — | ready, not opened yet |
+| 7 | `ChurchApps/FreeShow#3390` | open |
+
+**All 7 open.** Stack: #3384 → #3385 → #3386 → #3387 → #3388 → #3389. Independent: #3390.
 
 ## Submission strategy
 
