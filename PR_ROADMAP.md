@@ -16,12 +16,18 @@ All seven open as PRs against upstream **`dev`**.
 | 4 | `ChurchApps/FreeShow#3387` | **CLOSED** by vassbo | *"I don't think this is a benefit."* (vitest suite) |
 | 5 | `ChurchApps/FreeShow#3388` | **CLOSED** by vassbo | *"For what I can see it just adds `: any` explicitly in many cases to variables that already are detected as `any`."* |
 | 6 | `ChurchApps/FreeShow#3389` | **CLOSED** | no comment — silently closed (build/release + transition + regressions) |
-| 7 | `ChurchApps/FreeShow#3390` | **open** | *"What's the improvement here? And no need to have the Rebuild button."* |
-| 8 (feature) | `ChurchApps/FreeShow#3391` | **open** | *"I really don't think it's necessary…"* (scripture text protection) |
+| 7 | `ChurchApps/FreeShow#3390` | **open** | *"What's the improvement here? And no need to have the Rebuild button."* → **Rebuild button removed** (`19d859a`, pushed to `split/7`; auto-backfill kept, 19 search tests green); "what's the improvement" reply drafted (bug-fix reframe) |
+| 8 (feature) | `ChurchApps/FreeShow#3391` | **open** | *"I really don't think it's necessary…"* (scripture text protection) → concession reply drafted; keep on fork |
 
 **4 closed (#3386, #3387, #3388, #3389), 4 open (#3384, #3385, #3390, #3391).** Modernization stack: #3384 → #3385 → #3386 → #3387 → #3388 → #3389. Independent: #3390 (search), #3391 (scripture text protection).
 
 **Pattern:** @vassbo is declining most of the modernization as unnecessary for a *local desktop app* — he closed the **Svelte 5 migration itself (#3386)**, the **test suite (#3387)**, **strict types (#3388)**, and the **build/transition/regression bundle (#3389)**; and pushed back on **safe-eval (#3385)**, **search (#3390)**, and **scripture lock (#3391)**. Only **#3384 (security/deps)** has no comment. Closing #3386 also makes the transition fix moot upstream for now (no migration to attach to) — it survives as the `reference/svelte5-transition-global` branch + the posted explanation for if/when a migration happens.
+
+**Actions taken on the 4 open PRs (2026-06-16 sweep):**
+- **#3390 (search) — iterated, the one worth keeping.** Removed the manual "Rebuild search index" button per his note (`19d859a` on `split/7`, pushed → updates the PR). The lyric/content cache **auto-backfills** on load (`loadShows`/`loadShowsAsync`), so the button was redundant. Kept the real value: the **fuzzy-flooding gate** (search was returning ~every show), the **scorer repairs** (multi-word matching was disabled, `removeShortWords` a no-op, content outranking title, empty/punct queries matching everything), and **exact-phrase quotes**. 19 search unit tests green; electron `tsc` clean on the touched files. Reply drafted reframing it as a **bug fix**.
+- **#3385 (eslint/safe-eval) — concede.** He's right `new Function` is fine for a local app; it was also stacked on the now-closed #3386. Concession reply drafted (optional low-pressure offer to land ESLint 9 flat-config standalone). Close + keep on fork.
+- **#3391 (scripture) — concede.** Concession reply drafted (clarify text-only/opt-out/per-show-unlock, then defer). Close + keep on fork.
+- **#3384 (security/deps) — leave it / strongest.** Only one with no pushback; if it draws a "why" it'll be the Electron 37→40 major — can split the pure advisory fixes from the Electron bump if needed.
 
 ## Submission strategy
 
