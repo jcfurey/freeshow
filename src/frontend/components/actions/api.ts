@@ -18,6 +18,7 @@ import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, startCamera, startScreen, startStreaming, stopStreaming, toggleOutputs } from "../helpers/output"
 import { OutputHelper } from "../helpers/OutputHelper"
+import { isScriptureTextLocked } from "../helpers/scriptureProtection"
 import { changeOutputStyle, playSlideTimers, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { muteOutput, unmuteOutput } from "../helpers/video"
@@ -213,7 +214,10 @@ export const API_ACTIONS = {
     start_show: (data: API_id) => startShowSync(data.id),
     change_layout: (data: API_layout) => changeShowLayout(data),
     set_plain_text: (data: API_id_value) => formatText(data.value, data.id),
-    set_show: (data: API_id_value) => setShowAPI(data.id, data.value),
+    set_show: (data: API_id_value) => {
+        if (isScriptureTextLocked(data.id)) return
+        setShowAPI(data.id, data.value)
+    },
     rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
     add_group: (data: API_group) => addGroup(data),
     set_template: (data: API_id) => setTemplate(data.id),

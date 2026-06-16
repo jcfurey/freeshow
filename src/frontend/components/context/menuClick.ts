@@ -99,6 +99,7 @@ import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
+import { isScriptureTextLocked } from "../helpers/scriptureProtection"
 import { defaultOutput, getCurrentStyle, getFirstActiveOutput, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
@@ -2123,6 +2124,12 @@ export async function format(id: string, obj: ObjData, data: any = null) {
 
     const editing = get(activeEdit)
     const items = editing.items || []
+
+    // SCRIPTURE TEXT PROTECTION: block text formatting / find & replace on protected Bible text
+    if ((editing.type || "show") === "show" && isScriptureTextLocked(get(activeShow)?.id)) {
+        newToast("output.state_locked")
+        return
+    }
 
     // WIP let slide = getEditSlide()
 
