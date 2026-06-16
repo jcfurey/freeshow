@@ -39,10 +39,6 @@
     })
     onDestroy(() => destroyMain(listenerId))
 
-    function rebuildSearchCache() {
-        sendMain(Main.REBUILD_TEXT_CACHE)
-    }
-
     // delete shows from folder that are not indexed
     function deleteBrokenShows() {
         sendMain(Main.DELETE_SHOWS_NI, { shows: $shows })
@@ -89,13 +85,6 @@
 
 {#if type === "shows"}
     <div class="list">
-        <!-- REBUILD SEARCH / LYRIC CACHE -->
-        <InputRow>
-            <MaterialButton style="width: 100%;" icon="search" on:click={rebuildSearchCache} white>
-                <T id="actions.rebuild_search_cache" />
-            </MaterialButton>
-        </InputRow>
-
         <!-- USED TO DELETE "BROKEN" SHOWS -->
         {#if allShowsInFolder.length > Object.keys($shows).length}
             <InputRow>
