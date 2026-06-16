@@ -6,20 +6,22 @@
 Seven themed branches carved from `dev`, each rebased onto **current `upstream/dev`** and verified.
 All seven open as PRs against upstream **`dev`**.
 
-### Tracking (opened PRs)
+### Tracking (opened PRs) — maintainer sweep 2026-06-16 (via HTML fetch of PR pages)
 
-| PR | Upstream PR | Status |
-|----|-------------|--------|
-| 1 | `ChurchApps/FreeShow#3384` | open |
-| 2 | `ChurchApps/FreeShow#3385` | open |
-| 3 | `ChurchApps/FreeShow#3386` | open |
-| 4 | `ChurchApps/FreeShow#3387` | open |
-| 5 | `ChurchApps/FreeShow#3388` | open |
-| 6 | `ChurchApps/FreeShow#3389` | open |
-| 7 | `ChurchApps/FreeShow#3390` | open |
-| 8 (feature) | `ChurchApps/FreeShow#3391` | open |
+| PR | Upstream PR | Status | @vassbo |
+|----|-------------|--------|---------|
+| 1 | `ChurchApps/FreeShow#3384` | **open** | *(no comment yet)* — security & dependency hardening |
+| 2 | `ChurchApps/FreeShow#3385` | **open** | pushback: (1) concern about stacking on a PR needing substantial changes; (2) *"it's fine to use `new Function` because it's a local app and not a web app"* — safe parser seen as unnecessary |
+| 3 | `ChurchApps/FreeShow#3386` | **CLOSED** by vassbo | asked *"Did you fix the Svelte transition issue? I would like to have only the related diff in a PR."* → reply posted (isolated diff + Svelte-3 no-op caveat); **he closed the migration PR anyway** |
+| 4 | `ChurchApps/FreeShow#3387` | **CLOSED** by vassbo | *"I don't think this is a benefit."* (vitest suite) |
+| 5 | `ChurchApps/FreeShow#3388` | **CLOSED** by vassbo | *"For what I can see it just adds `: any` explicitly in many cases to variables that already are detected as `any`."* |
+| 6 | `ChurchApps/FreeShow#3389` | **CLOSED** | no comment — silently closed (build/release + transition + regressions) |
+| 7 | `ChurchApps/FreeShow#3390` | **open** | *"What's the improvement here? And no need to have the Rebuild button."* |
+| 8 (feature) | `ChurchApps/FreeShow#3391` | **open** | *"I really don't think it's necessary…"* (scripture text protection) |
 
-**All 8 open.** Modernization stack: #3384 → #3385 → #3386 → #3387 → #3388 → #3389. Independent: #3390 (search), #3391 (scripture text protection).
+**4 closed (#3386, #3387, #3388, #3389), 4 open (#3384, #3385, #3390, #3391).** Modernization stack: #3384 → #3385 → #3386 → #3387 → #3388 → #3389. Independent: #3390 (search), #3391 (scripture text protection).
+
+**Pattern:** @vassbo is declining most of the modernization as unnecessary for a *local desktop app* — he closed the **Svelte 5 migration itself (#3386)**, the **test suite (#3387)**, **strict types (#3388)**, and the **build/transition/regression bundle (#3389)**; and pushed back on **safe-eval (#3385)**, **search (#3390)**, and **scripture lock (#3391)**. Only **#3384 (security/deps)** has no comment. Closing #3386 also makes the transition fix moot upstream for now (no migration to attach to) — it survives as the `reference/svelte5-transition-global` branch + the posted explanation for if/when a migration happens.
 
 ## Submission strategy
 
