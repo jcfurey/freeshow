@@ -8,11 +8,14 @@ import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates } from "../helpers/array"
 import { history } from "../helpers/history"
 import { isEmpty } from "../helpers/output"
+import { isScriptureTextLocked } from "../helpers/scriptureProtection"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
 
 export function formatText(text: string, showId = "") {
     if (!showId) showId = get(activeShow)?.id || ""
+    // SCRIPTURE TEXT PROTECTION: don't let a plain-text/transpose rebuild overwrite protected Bible text
+    if (isScriptureTextLocked(showId)) return
     const show: Show = clone(_show(showId).get())
     if (!show) return
 
