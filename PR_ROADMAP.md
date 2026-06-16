@@ -6,6 +6,13 @@
 Seven themed branches carved from `dev`, each rebased onto **current `upstream/dev`** and verified.
 All seven open as PRs against upstream **`dev`**.
 
+### Tracking (opened PRs)
+
+| PR | Upstream PR | Status |
+|----|-------------|--------|
+| 1 | `ChurchApps/FreeShow#3384` | open |
+| 2–7 | — | not opened yet |
+
 ## Submission strategy
 
 - **PR1** and **PR7** are rooted directly on `upstream/dev` → independent, open **now, in parallel**.
@@ -79,11 +86,13 @@ Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-se
 **Title:** `Migrate to ESLint 9 flat config + replace new Function() math eval with a safe parser`
 
 **Body:**
-> **Security:** replaces a `new Function()` arithmetic evaluator with a small, safe arithmetic parser (removes an eval-style code path).
+> 🔗 **Stacked on #3384** (deps-and-security). Until that merges, the diff below also includes PR1's changes; GitHub collapses it to just this PR's delta once PR1 lands.
 >
-> **Tooling:** migrates **ESLint 8 → 9** (flat config), adds `typescript-eslint` 8 + `eslint-plugin-svelte`, removes the legacy `.eslintrc` files, and applies the resulting `eslint --fix` autofixes.
+> **Security:** replaces a `new Function()` arithmetic evaluator with a small, safe arithmetic parser in `src/frontend/utils/expression.ts` (+108), updating its call sites (`apiHelper`, `timers`, number inputs). Removes an eval-style code path.
 >
-> ⚠️ **Review note:** the large file count is almost entirely the mechanical `eslint --fix` pass. The substantive changes are the safe-eval replacement and the flat-config migration — review those two commits first and skim the autofix commit. Happy to split the autofix into its own PR if preferred.
+> **Tooling:** migrates **ESLint 8 → 9** (flat config in `config/linting/eslint.config.mjs`), adds `typescript-eslint` 8 + `eslint-plugin-svelte`, removes the legacy `.eslintrc` files, and applies the resulting `eslint --fix` autofixes.
+>
+> ⚠️ **Review note:** this PR's own delta is 298 files, but ~293 are the mechanical `eslint --fix` pass (commit `afedf4c`). The substantive changes are two commits — **safe-eval** (`b70680b`) and the **flat-config migration** (`0f10f95`); review those first. Happy to split the autofix into its own PR if preferred.
 
 ---
 
