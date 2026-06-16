@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
     import { getQuickExample } from "../../converters/txt"
-    import { activePopup, textEditActive, textEditZoom } from "../../stores"
+    import { activePopup, special, textEditActive, textEditZoom } from "../../stores"
     import { transposeText } from "../../utils/chordTranspose"
     import { newToast } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
@@ -18,7 +18,9 @@
     $: if (currentShow) text = getPlainEditorText()
 
     $: hasLockedSlide = Object.values(currentShow?.slides || {}).some((a) => a?.locked)
-    $: isLocked = currentShow?.locked || hasLockedSlide
+    // SCRIPTURE TEXT PROTECTION: also lock the plain-text editor for Bible-sourced shows (matches the editbox gate)
+    $: scriptureTextLocked = currentShow?.reference?.type === "scripture" && $special.protectScriptureText !== false && !currentShow?.unlockedScriptureText
+    $: isLocked = currentShow?.locked || hasLockedSlide || scriptureTextLocked
     $: if (isLocked) newToast("output.state_locked")
 
     // Ctrl+F in shortcuts.ts does not get triggered when a text input is active, so we trigger from here as well
