@@ -10,16 +10,16 @@ All seven open as PRs against upstream **`dev`**.
 
 | PR | Upstream PR | Status | @vassbo |
 |----|-------------|--------|---------|
-| 1 | `ChurchApps/FreeShow#3384` | **open** | *(no comment yet)* — security & dependency hardening |
-| 2 | `ChurchApps/FreeShow#3385` | **open** | pushback: (1) concern about stacking on a PR needing substantial changes; (2) *"it's fine to use `new Function` because it's a local app and not a web app"* — safe parser seen as unnecessary |
-| 3 | `ChurchApps/FreeShow#3386` | **CLOSED** by vassbo | asked *"Did you fix the Svelte transition issue? I would like to have only the related diff in a PR."* → reply posted (isolated diff + Svelte-3 no-op caveat); **he closed the migration PR anyway** |
-| 4 | `ChurchApps/FreeShow#3387` | **CLOSED** by vassbo | *"I don't think this is a benefit."* (vitest suite) |
-| 5 | `ChurchApps/FreeShow#3388` | **CLOSED** by vassbo | *"For what I can see it just adds `: any` explicitly in many cases to variables that already are detected as `any`."* |
-| 6 | `ChurchApps/FreeShow#3389` | **CLOSED** | no comment — silently closed (build/release + transition + regressions) |
-| 7 | `ChurchApps/FreeShow#3390` | **open** | *"What's the improvement here? And no need to have the Rebuild button."* → **Rebuild button removed** (`19d859a`, pushed to `split/7`; auto-backfill kept, 19 search tests green); "what's the improvement" reply drafted (bug-fix reframe) |
-| 8 (feature) | `ChurchApps/FreeShow#3391` | **open** | *"I really don't think it's necessary…"* (scripture text protection) → concession reply drafted; keep on fork |
+| 1 | `ChurchApps/FreeShow#3384` | **OPEN — ready, awaiting maintainer** | "ready whenever you want it" note posted (merges clean, builds, tests pass; Electron 37→40 flagged). **No maintainer reply yet.** The sole live PR. |
+| 2 | `ChurchApps/FreeShow#3385` | **CLOSED by jcfurey (conceded)** | vassbo: *"b70680b is overkill, it's fine to use `new Function` … local app"* + stacking concern. Dropped safe-parser, closed; noted ESLint 8 is EOL, flat-config on fork. |
+| 3 | `ChurchApps/FreeShow#3386` | **CLOSED — parked** | Migration. Standalone `feat/svelte5-vite8-migration` built, portability + runtime + svelte-3→5-with-#3384 all verified; **opens after #3384 lands**. |
+| 4 | `ChurchApps/FreeShow#3387` | **CLOSED by vassbo** | *"I don't think this is a benefit."* (vitest suite) |
+| 5 | `ChurchApps/FreeShow#3388` | **CLOSED by vassbo** | *"…just adds `: any` explicitly … already detected as `any`."* |
+| 6 | `ChurchApps/FreeShow#3389` | **CLOSED** | silently closed (build/release + transition + regressions) |
+| 7 | `ChurchApps/FreeShow#3390` | **✅ MERGED (`3823fb0`)** | Rebuild button removed per review → vassbo: *"Nice, great!"* → merged into dev. First modernization PR landed. |
+| 8 (feature) | `ChurchApps/FreeShow#3391` | **CLOSED by vassbo (declined)** | *"I really don't think it's necessary…"* → *"Yeah, I got that."* Conceded; stays on fork. |
 
-**4 closed (#3386, #3387, #3388, #3389), 4 open (#3384, #3385, #3390, #3391).** Modernization stack: #3384 → #3385 → #3386 → #3387 → #3388 → #3389. Independent: #3390 (search), #3391 (scripture text protection).
+**Current (2026-06-16 ~18:35): 1 MERGED (#3390), 1 OPEN & ready (#3384), 6 CLOSED (#3385 conceded, #3386 parked, #3387/#3388/#3389/#3391).** Clean queue: **#3384 → migration**. Only #3384 awaits the maintainer; nothing else actionable on our side.
 
 **Pattern:** @vassbo is declining most of the modernization as unnecessary for a *local desktop app* — he closed the **Svelte 5 migration itself (#3386)**, the **test suite (#3387)**, **strict types (#3388)**, and the **build/transition/regression bundle (#3389)**; and pushed back on **safe-eval (#3385)**, **search (#3390)**, and **scripture lock (#3391)**. Only **#3384 (security/deps)** has no comment. Closing #3386 also makes the transition fix moot upstream for now (no migration to attach to) — it survives as the `reference/svelte5-transition-global` branch + the posted explanation for if/when a migration happens.
 
