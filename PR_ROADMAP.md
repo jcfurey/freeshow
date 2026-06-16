@@ -121,13 +121,14 @@ All seven triaged at open: **0 comments, no reviews, no merge conflicts** on eve
 
 A standalone enhancement spun out of #3366 (Advanced Bible Engine request) + the user's concern that letting downloaded/API scripture be silently edited and re-projected invites objection.
 
-- **Branch:** `feature/protect-scripture-text` (off `upstream/dev`) — pushed. Also cherry-picked onto `dev` (`07a9842`, `svelte-check` 0). **PR not opened yet.**
+- **Branch:** `feature/protect-scripture-text` (off `upstream/dev`) — `720b230`, **3 commits**, pushed. Also on `dev` (`e87bba8`), `svelte-check` 0. **PR not opened yet.**
 - **Compare:** `https://github.com/ChurchApps/FreeShow/compare/dev...jcfurey:freeshow:feature/protect-scripture-text`
 - **Title:** `Protect Bible text from accidental edits (scripture shows read-only by default)`
-- **What it does:** verse text in Bible-sourced shows (`reference.type === "scripture"`) is read-only in the editor by default; styling/layout/templates/verse-number options stay editable — only the words lock.
+- **What it does:** verse text in Bible-sourced shows (`reference.type === "scripture"`) is read-only by default; styling/layout/templates/verse-number options stay editable — only the words lock.
   - Global setting `special.protectScriptureText` (default on) — Settings → General.
   - Per-show unlock `show.unlockedScriptureText` — edit-header "more options" (⋯) dropdown.
-  - Reuses the existing `EditboxLines` `isLocked` read-only render (Editbox passes `isLocked || scriptureTextLocked`) — **no new text-mutation paths**. 5 files, +24/−1.
+  - **Gated paths (hardened):** the inline editbox (`EditboxLines` `isLocked` render-swap), the plain-text popup (`TextEditor`/Notes `disabled`), and via a shared `isScriptureTextLocked()` helper — **format actions** (capitalize/lowercase/uppercase/trim), **find & replace** (`format()`), the **`formatText()` rebuild** (set_plain_text + transpose API + SlideEditor/TextEditor transpose), and the **`set_show` API**.
+  - **Deliberately NOT gated** (don't alter the *words*): style/layout, merge/split, paste-slides, delete. 10 files, +56/−4.
 - **Open decision:** currently locks **all** scripture shows; can narrow to **API-only** (`reference.data.api`) after runtime testing — pending the user's QA.
 - **Strategic:** an 8th PR while the 7 modernization PRs are still unreviewed, and a behavior change — consider holding until @vassbo engages, or leading with a comment on #3366.
 
