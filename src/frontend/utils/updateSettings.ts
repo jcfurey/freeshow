@@ -92,7 +92,8 @@ import {
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
-import { maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
+import { bibleNotes, bibleStudySettings, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
+import { defaultBibleStudySettings } from "./../../types/BibleStudy"
 import { checkForUpdates } from "./checkForUpdates"
 import { isMainWindow, startAutosave } from "./common"
 import { setLanguage } from "./language"
@@ -349,6 +350,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     resized: (v: any) => resized.set(v),
     scriptures: (v: any) => scriptures.set(v),
     scriptureSettings: (v: any) => scriptureSettings.set(v),
+    bibleNotes: (v: any) => bibleNotes.set(v || {}),
+    bibleStudySettings: (v: any) => bibleStudySettings.set({ ...defaultBibleStudySettings, ...(v || {}) }),
     slidesOptions: (v: any) => slidesOptions.set(v),
     splitLines: (v: any) => splitLines.set(v),
     templateCategories: (v: any) => templateCategories.set(v),

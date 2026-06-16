@@ -20,6 +20,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
+    import { openBibleStudy } from "./bibleStudyActions"
     import { createScriptureShow, formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
     import { brightenDarkColor, fadeColor } from "../../helpers/color"
 
@@ -1255,6 +1256,19 @@
 
         <MaterialButton title="scripture.search [Ctrl+B]" on:click={() => (contentSearchFieldActive = true)}>
             <Icon size={1.1} id="search" white />
+        </MaterialButton>
+
+        <MaterialButton
+            title="bible_study.open"
+            on:click={() =>
+                openBibleStudy({
+                    bibleId: previewBibleId,
+                    book: Number(activeReference.book) || 1,
+                    chapter: Number(activeReference.chapters?.[0]) || 1,
+                    verse: parseInt(String((activeReference.verses?.[0] || [])[0]), 10) || 1
+                })}
+        >
+            <Icon size={1.1} id="book" white />
         </MaterialButton>
     </FloatingInputs>
 {/if}

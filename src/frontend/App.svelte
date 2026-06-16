@@ -3,6 +3,7 @@
     import MainOutput from "./MainOutput.svelte"
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import Pdf from "./components/export/Pdf.svelte"
+    import BibleStudy from "./components/drawer/bible/BibleStudy.svelte"
     import Guide from "./components/guide/Guide.svelte"
     import { getContrast } from "./components/helpers/color"
     import { getBlending } from "./components/helpers/output"
@@ -82,6 +83,7 @@
             <MainOutput />
         {:else if $loaded}
             <Popup />
+            <BibleStudy />
             <QuickSearch />
             <Toast />
             <StatusIndicator />

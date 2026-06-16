@@ -62,6 +62,7 @@ export const mainResponses: MainResponses = {
     [Main.HISTORY]: () => getStore("HISTORY"),
     [Main.USAGE]: () => getStore("USAGE"),
     [Main.CACHE]: () => getStore("CACHE"),
+    [Main.BIBLE_STUDY]: () => getStore("BIBLE_STUDY"),
     // WINDOW
     [Main.CLOSE]: () => closeMain(),
     [Main.MAXIMIZE]: () => maximizeMain(),

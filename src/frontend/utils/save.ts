@@ -110,11 +110,18 @@ import {
     volume
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
-import { audioStreams, companion } from "./../stores"
+import { audioStreams, bibleNotes, bibleStudySettings, companion, crossReferences, strongsLexicon } from "./../stores"
 import { socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
 import { stopRemoteController } from "./remoteController"
+
+// The Bible study reference data (Strong's lexicon + cross references) can be large, and the store
+// comparison on save fully serializes its value. To keep it out of the per-autosave cost, only
+// include the BIBLE_STUDY payload when its data has actually changed since the last save. (Notes &
+// settings live in synced settings, so they are not part of this and don't trigger a rewrite here.)
+let bibleStudyDirty = true
+;[strongsLexicon, crossReferences].forEach((store) => store.subscribe(() => (bibleStudyDirty = true)))
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     startAutosave() // reset auto save timer
@@ -215,6 +222,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         EVENTS: get(events),
         MEDIA: get(media),
         THEMES: get(themes),
+        ...(bibleStudyDirty ? { BIBLE_STUDY: { lexicon: get(strongsLexicon), crossReferences: get(crossReferences) } } : {}),
         DRIVE_API_KEY: get(driveKeys),
         // CACHES SAVED TO MULTIPLE FILES
         showsCache: get(showsCache),
@@ -232,6 +240,9 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
 
     const saveData = clone(allSavedData)
 
+    // reset once captured; any change during/after this save re-marks it for the next save
+    bibleStudyDirty = false
+
     deletedShows.set([])
     renamedShows.set([])
 
@@ -248,6 +259,8 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         overlayCategories,
         scriptures,
         scriptureSettings,
+        bibleNotes,
+        bibleStudySettings,
         templateCategories,
         styles,
         profiles,
@@ -455,6 +468,8 @@ const saveList: { [key in SaveList]: any } = {
     resized: null,
     scriptures,
     scriptureSettings,
+    bibleNotes,
+    bibleStudySettings,
     slidesOptions,
     splitLines,
     templateCategories,

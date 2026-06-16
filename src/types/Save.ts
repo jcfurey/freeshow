@@ -1,4 +1,5 @@
 import type { Bible } from "json-bible/lib/Bible"
+import type { BibleStudyData } from "./BibleStudy"
 import type { Event } from "./Calendar"
 import type { History, HistoryNew } from "./History"
 import type { Media } from "./Main"
@@ -23,6 +24,8 @@ export type SaveListSyncedSettings =
     | "audioPlaylists"
     | "scriptures"
     | "scriptureSettings"
+    | "bibleNotes"
+    | "bibleStudySettings"
     | "groups"
     | "midiIn"
     | "emitters"
@@ -105,6 +108,7 @@ export interface SaveData {
     EVENTS: { [key: string]: Event }
     MEDIA: Media
     THEMES: { [key: string]: Themes }
+    BIBLE_STUDY?: BibleStudyData | {}
     DRIVE_API_KEY: any
     // CACHES SAVED TO MULTIPLE FILES
     showsCache?: Shows
