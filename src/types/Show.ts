@@ -13,6 +13,7 @@ export interface Show {
     origin?: string // "pco" | "churchApps" | "hymnary", etc.
     private?: boolean // hide from drawer
     locked?: boolean // disable edits
+    unlockedScriptureText?: boolean // allow editing Bible-sourced verse text even when "protect scripture text" is on
     category: null | ID
     quickAccess?: any
     reference?: {

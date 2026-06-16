@@ -54,5 +54,8 @@
 <MaterialToggleSwitch label="settings.slide_number_keys" checked={$special.numberKeys} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "numberKeys")} />
 <MaterialToggleSwitch label="settings.auto_shortcut_first_letter" checked={$special.autoLetterShortcut} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "autoLetterShortcut")} />
 
+<!-- scripture: -->
+<MaterialToggleSwitch label="settings.protect_scripture_text" checked={$special.protectScriptureText !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "protectScriptureText", true)} />
+
 <!-- when disabled: no ./F2 to clear, F5 clears slide timer instead of next slide, no PageUp/PageDown/Home/End for slide navigation -->
 <!-- <Checkbox checked={$special.disablePresenterControllerKeys} on:change={(e) => updateSpecial(e.target.checked, "disablePresenterControllerKeys")} /> -->

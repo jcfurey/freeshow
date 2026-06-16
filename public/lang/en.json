@@ -999,6 +999,8 @@
     },
     "edit": {
         "text": "Text",
+        "unlock_scripture_text": "Unlock scripture text",
+        "unlock_scripture_text_tip": "Allow editing the protected Bible text in this show",
         "font": "Font",
         "family": "Font family",
         "font_size": "Font size",
@@ -1352,6 +1354,7 @@
         "next_item_on_last_slide": "Arrow left/right changes project item on first/last slide",
         "slide_number_keys": "Play slides with number keys",
         "auto_shortcut_first_letter": "Auto shortcut to first letter in text",
+        "protect_scripture_text": "Protect Bible text from editing",
         "startup_projects_list": "Show the projects list on startup",
         "auto_output": "Activate output screen on startup",
         "hide_cursor_in_output": "Hide cursor in output",
