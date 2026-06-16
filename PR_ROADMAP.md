@@ -106,13 +106,17 @@ All seven triaged at open: **0 comments, no reviews, no merge conflicts** on eve
 - **Fix (in PR6 / #3389):** `|global` on **all three** output `custom` transitions — `OutputTransition` (text/media/PDF/effect), `Output.svelte` song attribution, `ListView` — plus a keying fix (`{#key transitionId}` not `{#key show}`) so outgoing slide text isn't orphaned. `svelte-check` 0 / build clean.
 - **✅ Confirmed (runtime):** visually verified on macOS (1.6.2-beta.2) — with a Fade set, slides **fade** on `dev` where they **snap** on the bare migration branch (`split/3`). The #1512 blocker is genuinely resolved. Fix kept in PR6 per decision, so PR3 in isolation still snaps until #3389 lands.
 - FreeShow already has a custom transition system (`utils/transitions.ts` `custom()`); the fix makes those existing transitions play again — no new system needed.
+- **Isolated reference branch (per @vassbo's #3386 request, 2026-06-16):** `reference/svelte5-transition-global` (off `upstream/dev`) — the *related diff only*, zero migration churn: `|global` on the 3 output `custom` transitions + the `transitionId` keying in `SlideContent`. **4 files, +12/−4**, `b9b23af`, pushed.
+  - Branch: `https://github.com/jcfurey/freeshow/tree/reference/svelte5-transition-global`
+  - Compare: `https://github.com/ChurchApps/FreeShow/compare/dev...jcfurey:freeshow:reference/svelte5-transition-global`
+  - ⚠️ **Key finding — no-op on the current Svelte-3 `dev`.** `upstream/dev` is `svelte@^3.59.2`, where transitions are **global by default**; the local-default change was Svelte **4** (confirmed via the official v4 migration guide: made local "to prevent confusion around page navigations," restore with `|global`). So `|global` only *does* anything once the Svelte 4/5 migration is underneath it — the branch is a clean review artifact / "ready for when the migration lands," **not** a standalone behavioral fix against today's `dev`. This is stated honestly in the draft #3386 reply (can't be a meaningful standalone PR; it belongs with the migration).
 
 **3. Out of scope — transition rework (#2169).** A separate, *pre-existing* (Svelte-4-era) effort the maintainer wants to own: identical-text flash / partial-fade, smoother text transitions. Our work only **restores pre-Svelte-5 behavior** — it deliberately does not touch #2169.
 
 ## Open polish items
 
 - A couple of PR1/PR2 commit messages still reference the now-stripped audit docs ("…from code audit", "…in audit docs"). Cosmetic; reword on request.
-- Transition fix is **complete** (all 3 output `custom` transitions have `|global`) but lives in **PR6** by decision, so **PR3/PR4/PR5 still snap until PR6 merges**. A drafted comment for #3386 explains the fix + points to #3389.
+- Transition fix is **complete** (all 3 output `custom` transitions have `|global`) but lives in **PR6** by decision, so **PR3/PR4/PR5 still snap until PR6 merges**. **@vassbo (#3386, 2026-06-16) asked for *only* the related diff in a PR** → extracted as the isolated reference branch `reference/svelte5-transition-global` (see concern #2 above). Reply drafted; honest caveat that it's a no-op on Svelte-3 `dev` and so is inseparable from the migration in effect.
 - **`import.meta` in iife companion builds (open).** `src/server/remote/components/Auth.svelte:7` resolves the logo via `new URL("…/freeshow.webp", import.meta.url)`. The companion apps build as `iife` (`vite.config.servers.mjs` → `formats: ['iife']`), where Vite 8 replaces `import.meta` with `{}` → the remote login logo URL breaks. **Upstream's code, unchanged** — a vite 4→8 behavior change our upgrade exposes (only the `remote` app). Minor/cosmetic; pending decision to fix in PR3 or flag on #3386.
 - **Both surfaced via `npm start` runtime QA**, which we'd skipped (only `npm run build` + automated suites were run). The dev-server (`index.html`) one is fixed; this logo one is open.
 
@@ -132,6 +136,7 @@ A standalone enhancement spun out of #3366 (Advanced Bible Engine request) + the
   - **Deliberately NOT gated** (don't alter the *words*): style/layout, merge/split, paste-slides, delete. 10 files, +56/−4.
 - **Open decision:** currently locks **all** scripture shows; can narrow to **API-only** (`reference.data.api`) after runtime testing — pending the user's QA.
 - **Strategic:** an 8th PR while the 7 modernization PRs are still unreviewed, and a behavior change — consider holding until @vassbo engages, or leading with a comment on #3366.
+- **@vassbo response (#3391, 2026-06-16) — declining:** *"I really don't think it's necessary… people will [not edit] willy-nilly, but rather fix spelling mistakes or break it up into parts."* His named use cases (typo fixes, splitting verses) are exactly what the text-lock gets in the way of, so the premise is weaker than assumed. Reply drafted: one clarification (it's text-**only** + opt-out toggle + per-show unlock — styling/splitting/whole-show stay editable, so the "unlock to change styling" concern doesn't apply), then **defer to his call**. Feature stays on the fork regardless; likely close the PR.
 
 ---
 
