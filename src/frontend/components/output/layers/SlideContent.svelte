@@ -273,11 +273,20 @@
             return
         }
 
-        // No real transition (duration 0 / "none"): swap synchronously instead of cycling `show` through
-        // false (which blanks the {#key} block for a frame — the "None" black flash). Mirrors the
-        // all-persistent early-return above, but for changed content. Don't bump transitionId (no remount).
+        // No real transition (duration 0 / "none"): swap without cycling `show` through false (which
+        // blanks the {#key} block for a frame — the "None" black flash). Mirrors the all-persistent
+        // early-return above, but for changed content. Don't bump transitionId (no remount).
         if (currentTransitionDuration === 0) {
-            ++updateGeneration // invalidate any in-flight show=false → show=true cycle
+            const noTransGen = ++updateGeneration // claim this update (invalidate any in-flight cycle)
+
+            // First-run black flash: a freshly-converted scripture show has cold auto-size text, so the
+            // incoming Textbox hides itself (visibility:hidden) while it measures, blanking the output.
+            // scheduleAutoSizePrecompute() (above) warms the cache off-screen — wait for it (bounded) so
+            // the incoming box is already measured before we swap. The OLD slide stays visible meanwhile,
+            // so there's no blank. Timeout means it never hangs (falls back to the previous behaviour).
+            if (precomputePending.size) await waitUntilValueIsDefined(() => !precomputePending.size, 10, 600)
+            if (noTransGen !== updateGeneration) return // a newer slide change superseded us
+
             currentItems = clone(currentSlide.items || [])
             current = {
                 outSlide: clone(outSlide),
