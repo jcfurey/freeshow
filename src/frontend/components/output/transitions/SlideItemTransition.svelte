@@ -60,14 +60,16 @@
             const templateNeedsAutoSize = Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : false
             const itemNeedsAutoSize = item.auto && !item.autoFontSize
 
-            if (templateNeedsAutoSize || itemNeedsAutoSize) {
+            // skip the legacy autosize fade-delay when the transition is "none" — the user chose no
+            // animation, so rely on hideUntilAutosized (instant swap once measured) instead of fading
+            if ((templateNeedsAutoSize || itemNeedsAutoSize) && transition?.type !== "none") {
                 outDelay = 500
                 if (!inDelay) inDelay = outDelay * 0.98
             }
         }
 
-        // add some time in case an identical item is "fading" in
-        if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 250
+        // add some time in case an identical item is "fading" in (skip for "none" — no animation, no flash risk)
+        if (!outDelay && itemTransition?.duration === 0 && item.type === "media" && transition?.type !== "none") outDelay = 250
         // the previous fallback kept the old item visible a moment longer to avoid a black flash,
         // but the autosize precompute path already keeps the new content ready, so we let the
         // zero-duration case swap immediately to prevent overlapping text.
