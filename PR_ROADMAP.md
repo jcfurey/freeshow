@@ -45,15 +45,55 @@ upstream/dev ─┬─ PR1 ─ PR2 ─ PR3 ─ PR4 ─ PR5 ─ PR6
 | 6 | `split/6-build-and-regression-fixes` | `b33ac05` | PR5 | 7 | 38 files (+792 / −677) |
 | 7 | `split/7-search-improvements` | `876117a` | — (upstream/dev) | 3 | 7 files (+285 / −106) |
 
-## Verification (stack tip `split/6`)
+## Verification
 
-- `svelte-check`: **0 errors** / 121 warnings (the warnings are the documented a11y roadmap in `ACCESSIBILITY.md`)
-- Electron strict `tsc`: **clean**
-- vitest: **267 tests pass** (37 files)
+**Stack tip (`split/6`):** `svelte-check` **0 errors** / 121 warnings (a11y roadmap in `ACCESSIBILITY.md`) · Electron strict `tsc` **clean** · vitest **267 tests pass** (37 files).
+
+Per-PR checks run before opening:
+
+| PR | Checked at | Result |
+|----|------------|--------|
+| 1 | via `split/3` build | contained in the `split/3` production build (compiles); `npm audit` / Playwright per PR description |
+| 2 | via `split/3` build | contained in the `split/3` production build (compiles) |
+| 3 | `split/3` | `npm run build` compiles; `svelte-check` shows **76 migration type errors** (deferred to PR5 by design; not an upstream-CI step) |
+| 4 | `split/4` | vitest **251 tests pass** |
+| 5 | `split/5` | `svelte-check` **0 errors**, electron `tsc` clean, server `tsc` clean |
+| 6 | `split/6` | `svelte-check` **0**, electron `tsc` clean, vitest **267** |
+| 7 | `split/7` | `search.test.ts` **19 tests pass** |
 
 ## Branch safety
 
-Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-security` … `backup/split/6-build-and-regression-fixes`.
+Original (pre-rewrite) split tips preserved as **branches on `origin`** (the proxy rejected tag pushes with 403, so these are branch refs; matching local `backup/split/*` tags are also retained):
+
+| backup branch (on origin) | original tip |
+|---|---|
+| `backup/split/1-deps-and-security` | `f804f84` |
+| `backup/split/2-eslint9-and-safe-eval` | `27c7db7` |
+| `backup/split/3-svelte5-vite8` | `394afb8` |
+| `backup/split/4-unit-test-suite` | `652258b` |
+| `backup/split/5-typescript-strict` | `36ca75f` |
+| `backup/split/6-build-and-regression-fixes` | `45a2705` |
+
+Restore a branch: `git push --force-with-lease origin origin/backup/split/N-…:split/N-…`.
+
+## Key findings & decisions
+
+- **Fork/upstream divergence.** `dev` = current `upstream/dev` + 96 commits. The modernization (themes 1–6) was built on top of a **26-commit feature layer** (`#33xx` fixes) that diverged from upstream's parallel `1.6.2-beta.2 (#3364)` release. Consequence: the themes can't sit on bare `upstream/dev` independently — they form a dependency chain `1→2→3→{4,5}→6`; only search (PR7) is truly independent.
+- **Build method — stacked redrive.** Each split branch = cherry-pick of `dev`'s theme commits onto `upstream/dev` as a stack. Conflicts resolved against `dev`'s known-good trees with a **mixed rule**: `package*.json` from the per-commit tree (`dev@sha` — keeps each branch's manifest+lock consistent for `npm ci`); all other source from **`dev` HEAD** (avoids transient feature-layer regressions that `dev`'s merges already fixed — e.g. an untyped `(a)` in `BoxStyle.svelte` that upstream types as `(a: any)`).
+- **Internal docs stripped.** `AUDIT.md`, `CLAUDE.md`, `PACKAGE_AUDIT.md` are absent from every branch (originally added in theme 1, removed in theme 6; now never introduced). Kept: `.gitattributes`, `.nvmrc`, `.github/workflows/ci.yml`.
+- **Deferred-by-design.** 76 `svelte-check` migration type errors appear in PR3/PR4 and are cleared in **PR5**. Two `|global` output-transition regressions from the migration are fixed in **PR6**.
+- **Upstream context.** `upstream/dev` already ships a skeleton vitest setup (2 test files) — PR4 expands it (2→253), PR7 builds on it (no new deps). Upstream CI runs **`npm run build` + Playwright only**; `svelte-check`/vitest are **not** CI-gated (`npm run test` is commented out in `playwright.yml`), so PR3's 76 errors won't turn CI red.
+- **Commit authorship.** Commits are authored by `@claude` (several co-authored with `@jcfurey`); no DCO sign-off.
+
+## PR review status (opened 2026-06-16)
+
+All seven triaged at open: **0 comments, no reviews, no merge conflicts** on every PR. CI **awaiting maintainer approval** (the gate showed on #3384–#3388). **Verdict: no comment needed on any PR** — the descriptions pre-empt the predictable reviewer questions (stacked cumulative diffs, the `package-lock.json` line count, the deferred type-errors/transition fixes).
+
+## Anticipated maintainer feedback (by likelihood)
+
+1. **`@claude` authorship / DCO sign-off** — fix = one-pass re-author across all 7 branches + force-push.
+2. **"Split the `eslint --fix` autofix"** on #3385 — already offered in the body; carve the autofix into its own PR.
+3. **CI red after approval** — diagnose the added `ci.yml` (#3384) or the build output and push fixes.
 
 ## Open polish items
 
