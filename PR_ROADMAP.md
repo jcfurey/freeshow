@@ -103,7 +103,7 @@ All seven triaged at open: **0 comments, no reviews, no merge conflicts** on eve
 **2. "Svelte Transitions are broken in newer versions… create a custom transition system first!" (ref #1512).** The blocker that closed #3379, and the same wall the prior Svelte 5 PR (#1512) hit: transitions **snap to the next frame** instead of animating.
 - **Root cause:** Svelte made transitions **local by default** at the 3→4 boundary (inherited by 5). A local transition doesn't play when a block *above* it (`{#key}`/`{#each}`/`{#if}`) is created/destroyed. FreeShow's output transitions live inside `{#key show}` / `{#each currentOut}`, so they snap. The manual compat migration skipped the `|global` that `svelte-migrate` adds automatically.
 - **Fix (in PR6 / #3389):** `|global` on **all three** output `custom` transitions — `OutputTransition` (text/media/PDF/effect), `Output.svelte` song attribution, `ListView` — plus a keying fix (`{#key transitionId}` not `{#key show}`) so outgoing slide text isn't orphaned. `svelte-check` 0 / build clean.
-- **Caveat:** verified via `svelte-check`/build only — **runtime visual QA still owed** (do slides animate?). Fix kept in PR6 per decision, so PR3 in isolation still snaps until #3389 lands.
+- **✅ Confirmed (runtime):** visually verified on macOS (1.6.2-beta.2) — with a Fade set, slides **fade** on `dev` where they **snap** on the bare migration branch (`split/3`). The #1512 blocker is genuinely resolved. Fix kept in PR6 per decision, so PR3 in isolation still snaps until #3389 lands.
 - FreeShow already has a custom transition system (`utils/transitions.ts` `custom()`); the fix makes those existing transitions play again — no new system needed.
 
 **3. Out of scope — transition rework (#2169).** A separate, *pre-existing* (Svelte-4-era) effort the maintainer wants to own: identical-text flash / partial-fade, smoother text transitions. Our work only **restores pre-Svelte-5 behavior** — it deliberately does not touch #2169.
@@ -112,6 +112,8 @@ All seven triaged at open: **0 comments, no reviews, no merge conflicts** on eve
 
 - A couple of PR1/PR2 commit messages still reference the now-stripped audit docs ("…from code audit", "…in audit docs"). Cosmetic; reword on request.
 - Transition fix is **complete** (all 3 output `custom` transitions have `|global`) but lives in **PR6** by decision, so **PR3/PR4/PR5 still snap until PR6 merges**. A drafted comment for #3386 explains the fix + points to #3389.
+- **`import.meta` in iife companion builds (open).** `src/server/remote/components/Auth.svelte:7` resolves the logo via `new URL("…/freeshow.webp", import.meta.url)`. The companion apps build as `iife` (`vite.config.servers.mjs` → `formats: ['iife']`), where Vite 8 replaces `import.meta` with `{}` → the remote login logo URL breaks. **Upstream's code, unchanged** — a vite 4→8 behavior change our upgrade exposes (only the `remote` app). Minor/cosmetic; pending decision to fix in PR3 or flag on #3386.
+- **Both surfaced via `npm start` runtime QA**, which we'd skipped (only `npm run build` + automated suites were run). The dev-server (`index.html`) one is fixed; this logo one is open.
 
 ---
 
