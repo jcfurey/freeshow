@@ -14,7 +14,8 @@ All seven open as PRs against upstream **`dev`**.
 | 2 | `ChurchApps/FreeShow#3385` | open |
 | 3 | `ChurchApps/FreeShow#3386` | open |
 | 4 | `ChurchApps/FreeShow#3387` | open |
-| 5–7 | — | not opened yet |
+| 5 | `ChurchApps/FreeShow#3388` | open |
+| 6–7 | — | not opened yet |
 
 ## Submission strategy
 
@@ -169,6 +170,8 @@ Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-se
 **Title:** `Build/release robustness, Svelte 5 transition fixes, and regression fixes`
 
 **Body:**
+> 🔗 **Stacked on #3388** (strict mode) — the final PR in the modernization stack.
+>
 > Final polish on top of the modernization stack.
 >
 > - **Svelte 5 transition regressions:** restore `|global` output transitions (the "snap" blocker) and stop previous slide text lingering during `|global` transitions — fixes visible playback regressions introduced by the Svelte 5 migration (PR3)
