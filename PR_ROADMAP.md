@@ -15,7 +15,8 @@ All seven open as PRs against upstream **`dev`**.
 | 3 | `ChurchApps/FreeShow#3386` | open |
 | 4 | `ChurchApps/FreeShow#3387` | open |
 | 5 | `ChurchApps/FreeShow#3388` | open |
-| 6–7 | — | not opened yet |
+| 6 | `ChurchApps/FreeShow#3389` | open |
+| 7 | — | ready, not opened yet |
 
 ## Submission strategy
 
@@ -190,9 +191,9 @@ Original (pre-rewrite) tips preserved as local tags: `backup/split/1-deps-and-se
 **Title:** `Repair show/lyrics search scorer, add caching, and support exact-phrase queries`
 
 **Body:**
-> Independent of the modernization stack — improves show/lyrics search.
+> Independent of the modernization stack — improves show/lyrics search. Builds on upstream's existing vitest setup (no new deps).
 >
-> - Repair the show/lyrics search **scorer** (+ tests)
+> - Repair the show/lyrics search **scorer** (rewrites `search.ts`; adds `search.test.ts` — **19 tests, all passing**)
 > - Add a lyric-search **cache** and stop search results flooding
 > - Support **quoted** queries for strict exact-phrase matching
 >
