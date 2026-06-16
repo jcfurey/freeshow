@@ -135,6 +135,28 @@ A standalone enhancement spun out of #3366 (Advanced Bible Engine request) + the
 
 ---
 
+## Transition flicker audit (#2169) — dev-only fixes
+
+Deep audit of the output/transition pipeline for the long-standing flicker complex tracked in **#2169 "Rework Transitions"** (black-frame flashes, identical-text fade at 0% offset, scripture metadata flashing). Corroborated by the **closed #2927** ("stabilise existing transition system" — targeted `main`, never merged).
+
+**Root causes found (in `src/frontend/components/output/`):**
+- **"None" black flash:** `SlideContent.updateItems()` cycled `show=false→true` across macrotasks, blanking the `{#key}` block for a frame even when transition = None; and `SlideItemTransition` synthesized a `fade(duration:1)` for None via the autosize-500ms / media-250ms flash-delays (the media one is the exact #2927 bug — `dev` lacked that guard).
+- **"First run only" qualifier:** cold auto-size cache → `Textbox` hides itself (`visibility:hidden`) until the font is measured on first display; warm on run 2.
+- **Identical-text fade (0% offset):** per-item persistence is defeated when *any* sibling transitions, and `itemsAreEqual` compared full JSON including volatile `autoFontSize`/`previewAutoFontSize`.
+- **Metadata flash (#2451):** `Overlay` (metadata renderer) remounted via `{#key show}` + `show=false→true` every change; `getMetadata()` also returns fresh refs each tick + a `setTimeout` clear-to-`[]`.
+- *Secondary/possible:* `Media.svelte {#key retryCount}` remount on decode error; background/text desync on rapid advance; `setTemplateStyle` in-place mutation re-triggering the child diff.
+
+**Fixes applied on `dev`** (3 commits, `svelte-check` 0; **NOT PR'd** — vassbo wants to own #2169 and closed #2927; needs runtime visual QA):
+- `7c2cf77` — `SlideItemTransition`: guard the autosize/media flash-delays with `type !== "none"` (no synthesized fade under None).
+- `09af4d5` — `SlideContent`: synchronous swap when `currentTransitionDuration === 0` (no `show`-cycle blank); `itemsAreEqual` ignores volatile auto-size fields.
+- `f876ed1` — `Overlay`: synchronous swap for no-transition (no metadata `{#key show}` remount).
+
+**Deliberately NOT fixed:** the cold-autosize-cache *first-run hide-blank* (the deeper half of "first run only") — needs cache persistence / awaited precompute (riskier surgery). Revisit if a brief first-run blank persists after the above.
+
+**Optional contribution:** a **#2169 diagnosis comment** (especially the cold-cache "first run only" explanation, which answers @frederickjh's open question) would help vassbo's rework without stepping on it — not yet posted.
+
+---
+
 ## PR 1 — Security & dependency hardening
 **Branch:** `split/1-deps-and-security` → **base:** `dev` · independent (open now) · 10 commits
 
