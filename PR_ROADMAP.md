@@ -17,8 +17,9 @@ All seven open as PRs against upstream **`dev`**.
 | 5 | `ChurchApps/FreeShow#3388` | open |
 | 6 | `ChurchApps/FreeShow#3389` | open |
 | 7 | `ChurchApps/FreeShow#3390` | open |
+| 8 (feature) | `ChurchApps/FreeShow#3391` | open |
 
-**All 7 open.** Stack: #3384 → #3385 → #3386 → #3387 → #3388 → #3389. Independent: #3390.
+**All 8 open.** Modernization stack: #3384 → #3385 → #3386 → #3387 → #3388 → #3389. Independent: #3390 (search), #3391 (scripture text protection).
 
 ## Submission strategy
 
@@ -121,7 +122,7 @@ All seven triaged at open: **0 comments, no reviews, no merge conflicts** on eve
 
 A standalone enhancement spun out of #3366 (Advanced Bible Engine request) + the user's concern that letting downloaded/API scripture be silently edited and re-projected invites objection.
 
-- **Branch:** `feature/protect-scripture-text` (off `upstream/dev`) — `720b230`, **3 commits**, pushed. Also on `dev` (`e87bba8`), `svelte-check` 0. **PR not opened yet.**
+- **Branch:** `feature/protect-scripture-text` (off `upstream/dev`) — `720b230`, **3 commits**, pushed. Also on `dev` (`e87bba8`), `svelte-check` 0. **PR open: `ChurchApps/FreeShow#3391`.**
 - **Compare:** `https://github.com/ChurchApps/FreeShow/compare/dev...jcfurey:freeshow:feature/protect-scripture-text`
 - **Title:** `Protect Bible text from accidental edits (scripture shows read-only by default)`
 - **What it does:** verse text in Bible-sourced shows (`reference.type === "scripture"`) is read-only by default; styling/layout/templates/verse-number options stay editable — only the words lock.
