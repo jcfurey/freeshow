@@ -29,6 +29,19 @@ All seven open as PRs against upstream **`dev`**.
 - **#3391 (scripture) — concede.** Concession reply drafted (clarify text-only/opt-out/per-show-unlock, then defer). Close + keep on fork.
 - **#3384 (security/deps) — leave it / strongest.** Only one with no pushback; if it draws a "why" it'll be the Electron 37→40 major — can split the pure advisory fixes from the Electron bump if needed.
 
+## Standalone Svelte 5 migration — `feat/svelte5-vite8-migration` (per @vassbo's #3386 follow-up)
+
+After the #3386 reply, @vassbo (2026-06-16): *"Okay, that makes sense. But I would still like it to not be stacked on another PR. Also have not checked if there's any other breaking changes."* → he accepts the transition-fix explanation and wants the **migration itself un-stacked** (off `dev`, not on #3385), self-contained with the transition fix. #3386 is closed, so this is a **fresh branch + new PR**.
+
+- **Branch:** `feat/svelte5-vite8-migration` (off `upstream/dev`), pushed. **163 files, +5046/−4350** (incl. regenerated lockfile).
+- **Compare:** `https://github.com/ChurchApps/FreeShow/compare/dev...jcfurey:freeshow:feat/svelte5-vite8-migration`
+- **How built:** cherry-picked the 11 migration commits (`split/2..split/3`) onto `dev` with `-X theirs`; **dropped all #3384 (security/deps) and #3385 (eslint9/safe-eval) content.** Reconciled `package.json` to dev + svelte5/vite8/ts5 **only** (electron 37, vitest, version `beta.2` preserved); regenerated `package-lock.json`.
+- **Necessary eslint change:** dropped `eslint-plugin-svelte3` (Svelte-3-only, blocks `npm install` with svelte 5) + its `lint:svelte` step/config. `.svelte` still covered by svelte-check/prettier/stylelint. This is the *only* eslint touch — not the #3385 modernization.
+- **"Other breaking changes" found (answers his caveat):** building off **current** dev surfaced real Vite-8/rolldown errors — type-only imports must use `import type` (isolatedModules); newer dev code (Show, OutData, Item, ContextMenuItem, ProjectShowRef, DropAreas, Unsubscriber, …) used value imports. Converted all (~25 files). Also the known `import.meta`/iife remote-logo issue still applies (flag in PR).
+- **Transition fix folded in** (self-contained): `|global` on OutputTransition/Output attribution/ListView + `transitionId` keying in SlideContent.
+- **Verified:** `npm run build` **passes** (frontend + servers + electron + postbuild). `svelte-check` **71** deferred type errors (compatibility mode preserved — the documented backlog; not in upstream CI). Commits: 11 migration + `85057c7` (deps reconcile) + `4c138a1` (Vite-8 type imports + transitions).
+- **NOT yet done:** Playwright smoke (not run here); visual runtime QA; user to open the new PR + post the reply.
+
 ## Submission strategy
 
 - **PR1** and **PR7** are rooted directly on `upstream/dev` → independent, open **now, in parallel**.
