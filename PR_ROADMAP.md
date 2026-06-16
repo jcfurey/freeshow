@@ -152,6 +152,11 @@ Deep audit of the output/transition pipeline for the long-standing flicker compl
 - `f876ed1` — `Overlay`: synchronous swap for no-transition (no metadata `{#key show}` remount).
 - `5e213e8` — `SlideContent`: the no-transition swap now **awaits the off-screen autosize precompute** (bounded 600 ms, generation-guarded) before swapping, so a freshly-converted scripture show's cold-cache text is already measured (no `visibility:hidden` hide-blank) and the old slide stays visible meanwhile. Fixes the **"first run only"** black flash (finding #5).
 
+**Standalone reference branch:** `feature/transition-flicker-fixes` (off `upstream/dev`) — the 4 fixes cherry-picked clean onto current upstream (3 files, +48/−5), so they read as the flicker fixes *in isolation* against the released transition system. Not opened as a PR.
+- Branch: `https://github.com/jcfurey/freeshow/tree/feature/transition-flicker-fixes`
+- Compare: `https://github.com/ChurchApps/FreeShow/compare/dev...jcfurey:freeshow:feature/transition-flicker-fixes`
+- **Shared with @vassbo** via email (2026-06-16), framed as "here if useful" alongside the offer to open focused PRs.
+
 **Optional contribution:** a **#2169 diagnosis comment** (especially the cold-cache "first run only" explanation, which answers @frederickjh's open question) would help vassbo's rework without stepping on it — not yet posted.
 
 ---
