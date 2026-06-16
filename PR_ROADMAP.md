@@ -146,12 +146,11 @@ Deep audit of the output/transition pipeline for the long-standing flicker compl
 - **Metadata flash (#2451):** `Overlay` (metadata renderer) remounted via `{#key show}` + `show=false→true` every change; `getMetadata()` also returns fresh refs each tick + a `setTimeout` clear-to-`[]`.
 - *Secondary/possible:* `Media.svelte {#key retryCount}` remount on decode error; background/text desync on rapid advance; `setTemplateStyle` in-place mutation re-triggering the child diff.
 
-**Fixes applied on `dev`** (3 commits, `svelte-check` 0; **NOT PR'd** — vassbo wants to own #2169 and closed #2927; needs runtime visual QA):
+**Fixes applied on `dev`** (4 commits, `svelte-check` 0; **NOT PR'd** — vassbo wants to own #2169 and closed #2927; needs runtime visual QA):
 - `7c2cf77` — `SlideItemTransition`: guard the autosize/media flash-delays with `type !== "none"` (no synthesized fade under None).
 - `09af4d5` — `SlideContent`: synchronous swap when `currentTransitionDuration === 0` (no `show`-cycle blank); `itemsAreEqual` ignores volatile auto-size fields.
 - `f876ed1` — `Overlay`: synchronous swap for no-transition (no metadata `{#key show}` remount).
-
-**Deliberately NOT fixed:** the cold-autosize-cache *first-run hide-blank* (the deeper half of "first run only") — needs cache persistence / awaited precompute (riskier surgery). Revisit if a brief first-run blank persists after the above.
+- `5e213e8` — `SlideContent`: the no-transition swap now **awaits the off-screen autosize precompute** (bounded 600 ms, generation-guarded) before swapping, so a freshly-converted scripture show's cold-cache text is already measured (no `visibility:hidden` hide-blank) and the old slide stays visible meanwhile. Fixes the **"first run only"** black flash (finding #5).
 
 **Optional contribution:** a **#2169 diagnosis comment** (especially the cold-cache "first run only" explanation, which answers @frederickjh's open question) would help vassbo's rework without stepping on it — not yet posted.
 
