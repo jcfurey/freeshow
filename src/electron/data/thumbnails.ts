@@ -65,7 +65,6 @@ export async function getThumbnail(data: { input: string; size: number }) {
             // source file is newer than thumbnail, delete old thumbnail
             deleteFile(outputPath)
         } else {
-            currentlyGenerating.delete(mediaId)
             return finish(outputPath)
         }
     }
@@ -77,7 +76,7 @@ export async function getThumbnail(data: { input: string; size: number }) {
     return finish(outputPath)
 
     function finish(output: string) {
-        // safety net: if generation timed out without clearing the lock, release it so this media isn't blocked forever
+        // release the lock if it's still held (cache hit, or generation that timed out without clearing it)
         if (currentlyGenerating.has(mediaId)) currentlyGenerating.delete(mediaId)
 
         if (failedPaths.includes(mediaId)) {
