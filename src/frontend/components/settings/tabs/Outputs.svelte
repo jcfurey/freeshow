@@ -375,7 +375,7 @@
 <Title label="NDI®" icon="ndi" />
 
 <InputRow arrow={currentOutput?.ndi} bind:open={ndiMenuOpened}>
-    <MaterialToggleSwitch label="actions.enable NDI®" style="width: 100%;" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={(e) => updateOutput("ndi", e.detail)} />
+    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["NDI®"])} style="width: 100%;" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={(e) => updateOutput("ndi", e.detail)} />
 
     <svelte:fragment slot="menu">
         {#if currentOutput}
@@ -394,7 +394,7 @@
 <Title label="Blackmagic Design" icon="blackmagic" />
 
 <InputRow arrow={currentOutput?.blackmagic} bind:open={bmdMenuOpened}>
-    <MaterialToggleSwitch label="actions.enable Blackmagic" style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
+    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["Blackmagic"])} style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
 
     <svelte:fragment slot="menu">
         <MaterialDropdown
@@ -428,7 +428,7 @@
 <Title label="WebRTC Streaming" icon="record" />
 
 <InputRow arrow={currentOutput?.webrtc} bind:open={webrtcMenuOpened}>
-    <MaterialToggleSwitch label="actions.enable WebRTC" style="width: 100%;" checked={currentOutput?.webrtc} defaultValue={false} on:change={(e) => updateOutput("webrtc", e.detail)} />
+    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["WebRTC"])} style="width: 100%;" checked={currentOutput?.webrtc} defaultValue={false} on:change={(e) => updateOutput("webrtc", e.detail)} />
 
     <svelte:fragment slot="menu">
         {#if currentOutput}

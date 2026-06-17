@@ -680,6 +680,7 @@
         "done": "Done",
         "disable": "Disable",
         "enable": "Enable",
+        "enable_specific": "Enable $1",
         "undo": "Undo",
         "redo": "Redo",
         "cut": "Cut",
