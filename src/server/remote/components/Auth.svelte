@@ -3,9 +3,7 @@
     import { translate } from "../util/helpers"
     import { send } from "../util/socket"
     import { _get, _update, dictionary, password } from "../util/stores"
-    // import the asset directly so Vite resolves it (small → inlined data URI); avoids
-    // `import.meta.url`, which Vite 8's iife companion build replaces with {} and would
-    // throw "Invalid URL" at runtime.
+    // direct import → Vite inlines as a data URI; avoids `import.meta.url` (blanked to {} in the iife companion build)
     import freeshowLogo from "../../../../public/import-logos/freeshow.webp"
 
     function submit() {
