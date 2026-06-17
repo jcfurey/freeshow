@@ -243,6 +243,7 @@ export class OutputHelper {
 
     // store previous in case it has been cleared after being played (e.g. when a playing video has finished)
     private static previousOutputted: OutData | null = null
+    private static pendingSlides: Record<string, OutSlide> = {}
 
     private static isOutputted(outputId: string, item: ShowRef, next: boolean, options: Options) {
         const out = this.getOut(outputId)
@@ -447,7 +448,11 @@ export class OutputHelper {
 
     private static getOut(outputId: string) {
         const currentOutput = get(outputs)[outputId] || {}
-        let out = currentOutput.out || {}
+        let out = currentOutput.out ? { ...currentOutput.out } : {}
+
+        if (this.pendingSlides[outputId]) {
+            out.slide = this.pendingSlides[outputId]
+        }
 
         // restore cleared slide position (only if active show is the same as outputted)
         const clearedSlide = get(outputSlideCache)[outputId]
@@ -468,8 +473,15 @@ export class OutputHelper {
         const layoutData = layout[data.index ?? -1]?.data
 
         checkActionTrigger(layoutData, data.index)
+
+        this.pendingSlides[outputId] = data
+
         // allow custom actions to trigger first
         setTimeout(() => {
+            if (this.pendingSlides[outputId] === data) {
+                delete this.pendingSlides[outputId]
+            }
+
             setOutput("slide", data, false, outputId)
             updateOut(data.id, data.index!, layout, slideLayers, outputId)
         })
