@@ -649,21 +649,26 @@
         if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
 
         if (ref.type === "overlay") {
+            const currentOverlays = $overlays
+            if (!currentOverlays[ref.id]?.items?.[itemIndex] || currentOverlays[ref.id].items[itemIndex].autoFontSize === fontSize) return
+
             overlays.update((a) => {
-                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.type === "template") {
+            const currentTemplates = $templates
+            if (!currentTemplates[ref.id]?.items?.[itemIndex] || currentTemplates[ref.id].items[itemIndex].autoFontSize === fontSize) return
+
             templates.update((a) => {
-                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.showId) {
-            showsCache.update((a) => {
-                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
+            const currentShows = $showsCache
+            if (!currentShows[ref.showId]?.slides?.[ref.id]?.items?.[itemIndex] || currentShows[ref.showId].slides[ref.id].items[itemIndex].autoFontSize === fontSize) return
 
+            showsCache.update((a) => {
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
@@ -674,21 +679,26 @@
         if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
 
         if (ref.type === "overlay") {
+            const currentOverlays = $overlays
+            if (!currentOverlays[ref.id]?.items?.[itemIndex] || currentOverlays[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
+
             overlays.update((a) => {
-                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
         } else if (ref.type === "template") {
+            const currentTemplates = $templates
+            if (!currentTemplates[ref.id]?.items?.[itemIndex] || currentTemplates[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
+
             templates.update((a) => {
-                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
         } else if (ref.showId) {
-            showsCache.update((a) => {
-                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
+            const currentShows = $showsCache
+            if (!currentShows[ref.showId]?.slides?.[ref.id]?.items?.[itemIndex] || currentShows[ref.showId].slides[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
 
+            showsCache.update((a) => {
                 a[ref.showId!].slides[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
