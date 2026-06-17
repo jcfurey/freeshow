@@ -859,8 +859,8 @@
     }
 
     .edit :global(.break) {
-        /* balanced breaking, looks much cleaner */
-        text-wrap: balance;
+        text-wrap: balance; /* balanced breaking, looks much cleaner */
+        white-space: pre; /* preserve special spaces from Text edit */
     }
     .edit :global(.break.normalWrap) {
         text-wrap: unset;

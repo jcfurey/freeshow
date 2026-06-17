@@ -618,8 +618,8 @@
         /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
 
-        /* balanced breaking, looks much cleaner */
-        text-wrap: balance;
+        text-wrap: balance; /* balanced breaking, looks much cleaner */
+        white-space: pre; /* preserve special spaces from Text edit */
     }
 
     /* span {
