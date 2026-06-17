@@ -328,7 +328,8 @@
         return device.data?.supportsInternalKeying || device.data?.supportsExternalKeying || false
     }
 
-    $: outputLabel = currentOutput?.blackmagicData?.displayMode || `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
+    $: isCropped = currentOutput?.cropping && (currentOutput.cropping.left || 0) + (currentOutput.cropping.right || 0) + (currentOutput.cropping.top || 0) + (currentOutput.cropping.bottom || 0) > 0
+    $: outputLabel = (currentOutput?.blackmagicData?.displayMode || `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`) + (isCropped ? ` - settings.cropped` : "")
 
     let ndiMenuOpened = false
     let bmdMenuOpened = false

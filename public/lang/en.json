@@ -1368,6 +1368,7 @@
         "output_resolution_ratio": "Use output resolution aspect ratio",
         "font_size_ratio": "Font size ratio",
         "cropping": "Cropping",
+        "cropped": "Cropped",
         "frame_rate": "Frame rate",
         "device": "Device",
         "display_mode": "Display mode",
