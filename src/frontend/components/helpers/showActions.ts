@@ -1051,10 +1051,20 @@ const dynamicValues = {
         const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
     },
+    slide_group_color: ({ show, ref, slideIndex }) => {
+        const parentIndex = ref[slideIndex]?.parent?.layoutIndex ?? slideIndex
+        const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
+        return groupColor
+    },
     slide_group_next: ({ show, ref, slideIndex, outSlide }) => {
         const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
         const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
+    },
+    slide_group_next_color: ({ show, ref, slideIndex }) => {
+        const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
+        const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
+        return groupColor
     },
     slide_group_upcoming: ({ show, ref, slideIndex, outSlide }) => {
         if (slideIndex < 0) return ""
@@ -1062,6 +1072,13 @@ const dynamicValues = {
         while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
         const group = show?.slides?.[ref[nextParentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[nextParentIndex]?.id, group, nextParentIndex, false, false)
+    },
+    slide_group_upcoming_color: ({ show, ref, slideIndex }) => {
+        if (slideIndex < 0) return ""
+        let nextParentIndex = slideIndex + 1
+        while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
+        const groupColor = show?.slides?.[ref[nextParentIndex]?.id]?.color || ""
+        return groupColor
     },
     slide_notes: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex]?.id]?.notes || "",
     slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
@@ -1155,9 +1172,17 @@ export function getVariableNameId(name: string) {
     return name.toLowerCase().trim().replaceAll(" ", "_")
 }
 
-export function getNumberVariables(variableUpdater = get(variables), _dynamicUpdaters: any = null) {
+export function createCSSVariables(variableUpdater = get(variables), _dynamicUpdaters: any = null, type: "default" | "stage" = "default", _updateTrigger: any = null) {
+    // add all number variables
     const numberVariables = Object.values(variableUpdater || {}).filter((a) => a && (a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{"))))
-    return numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
+    let css = numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? getDynamicValue(v.text || "", type) : (v.number ?? (v.default || 0))};`), "")
+
+    // add color dynamic values
+    css += `--slide-group-color: ${getDynamicValue("slide_group_color", type)};`
+    css += `--slide-group-next-color: ${getDynamicValue("slide_group_next_color", type)};`
+    css += `--slide-group-upcoming-color: ${getDynamicValue("slide_group_upcoming_color", type)};`
+
+    return css
 }
 
 // PROJECT SECTION DATA

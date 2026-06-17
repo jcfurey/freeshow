@@ -10,7 +10,7 @@
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getAllActiveOutputs, getFirstActiveOutput, getOutputLines, getOutputResolution, percentageStylePos } from "../helpers/output"
-    import { getNumberVariables } from "../helpers/showActions"
+    import { createCSSVariables } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
     import TextboxLines from "./TextboxLines.svelte"
@@ -120,6 +120,7 @@
         if (dateInterval) clearInterval(dateInterval)
         if (loopStop) clearTimeout(loopStop)
         if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
+        if (cssInterval) clearInterval(cssInterval)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
@@ -747,8 +748,11 @@
         send(OUTPUT, ["ACTION_MAIN"], { id: item.button.release })
     }
 
-    // give CSS access to number variable values
-    $: cssVariables = getNumberVariables($variables, $outputs)
+    let updateTrigger = 0
+    let cssInterval = setInterval(() => updateTrigger++, 1000)
+
+    // give CSS access to certain dynamic values
+    $: cssVariables = createCSSVariables($variables, $outputs, isStage ? "stage" : "default", updateTrigger)
 
     // initialize default filter values to get the transition working (should use animation)
     // https://stackoverflow.com/questions/68632554/css-backdrop-filter-does-not-work-with-transition
