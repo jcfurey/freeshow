@@ -17,7 +17,6 @@ Sentry.init({
     }
 })
 
-// Svelte 5: components are instantiated with mount() instead of `new App()`
 const app = mount(App, { target: document.body })
 
 export default app

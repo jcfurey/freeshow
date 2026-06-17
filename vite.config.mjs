@@ -32,8 +32,8 @@ export default defineConfig({
               rollupOptions: {
                   output: {
                       assetFileNames: (assetInfo) => {
-                          // Vite 8 / Rollup 4: prefer names[] (the singular .name is deprecated)
-                          const name = assetInfo.names?.[0] ?? assetInfo.name ?? ""
+                          // Vite 8 / Rollup 4: asset name comes from names[]
+                          const name = assetInfo.names?.[0] ?? ""
                           if (name.endsWith(".css")) {
                               return "bundle.css"
                           }

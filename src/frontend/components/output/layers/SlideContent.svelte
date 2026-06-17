@@ -48,10 +48,8 @@
     let currentItems: Item[] = []
     let current: any = {}
     let show = false
-    // Monotonic id for the {#key} below. Keying on the boolean `show` makes the outgoing slide
-    // (key=true) and the incoming slide (key=true again) share an identity, so Svelte can't keep
-    // both alive during a |global transition — the previous slide's text gets left on screen.
-    // A unique id per reveal gives each transition its own identity so the outro cleans up.
+    // Unique id per reveal so each {#key} block gets its own identity; keying on the boolean
+    // `show` would orphan the outgoing slide's text during the |global outro.
     let transitionId = 0
 
     // Track items that are unchanged between slides and have no transition (to avoid redraw flicker)
