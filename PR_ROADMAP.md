@@ -99,6 +99,16 @@ Validated the full sequence vassbo wants (land #3384 on Svelte 3, then migration
 
 **Status:** ✅ **MERGED** into upstream `svelte5` (integration/test branch). Reaches `dev` only after vassbo's testing there. All review threads resolved; nothing left on our side for #3396. Migration-independent follow-ups (electron / music-metadata / fast-xml-parser) tracked under the #3384 deferred list.
 
+## Post-merge follow-ups (2026-06-17)
+
+With #3396 merged, the deferred dep upgrades were extracted from this modernization branch as **standalone PR branches off `upstream/dev`** (svelte-3 base — the migration is on the separate `svelte5` branch, not yet `dev`). Build-verified, **pushed, no PRs opened** (vassbo deferred these during #3384 and is mid-testing the migration):
+
+- **`deps/music-metadata-11`** (`756db3a`) — bump 7 → 11. v11 is ESM-only but ships the `module-sync` export, so it loads via `require(esm)` (Node ≥22.12 / electron 37+) — the existing static imports work unchanged; **no dynamic-`import()` needed** (under `module: commonjs`, TS emits `import()` as `require()` anyway, so it wouldn't help). One real v7→v11 fix: cover-art `picture[].data` is now `Uint8Array` → `Buffer.from()` in `nowPlaying.ts`. ✅ electron `tsc` clean, unit tests pass (37). ⏳ in-Electron audio-metadata read = manual QA.
+- **`deps/electron-40`** — bump 37 → 40 (+ electron-builder 26.15.3, supports v40) + `NSAudioCaptureUsageDescription` in `electron-builder.yaml`. ✅ clean install (native deps rebuilt against the v40 ABI), electron `tsc` clean (no API breaks — desktopCapturer / systemPreferences / BrowserWindow options all compatible), unit tests pass (37). ⏳ app launch + screen/desktop capture runtime + macOS audio-capture/notarization = manual QA (no Mac/display in CI).
+- **fast-xml-parser `5.4.1 → ^5.8.0`** — not branched yet: **gated on @vassbo's pin reason.** Question to post: *"What was the reason for pinning fast-xml-parser to 5.4.1? ^5.8.0 (still v5) clears the entity-expansion (XXE) + builder-injection advisories, and our only use is one XMLParser in the pptx importer with stable options — safe to bump, or a specific 5.5+ regression?"*
+
+**Fork `dev` synced:** reset to a clean mirror of `upstream/dev` (`5465acf`); the pre-reset 105-commit modernization-integration state is preserved at `origin/backup/dev-pre-mirror-5e213e8`.
+
 ## Submission strategy
 
 - **PR1** and **PR7** are rooted directly on `upstream/dev` → independent, open **now, in parallel**.
