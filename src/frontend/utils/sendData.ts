@@ -68,9 +68,7 @@ export async function sendData(id: Clients, msg: ClientMessage, check = false) {
     let connectionId = msg.id
     if (!connectionId) connectionId = Object.keys(get(connections)[id] || {})[0]
 
-    // REMOTE auth gate: when a password is set, only honor control/API messages from a connection that has authenticated ("entered").
-    // The handshake channels stay open so a client can still authenticate. Legitimate remote clients authenticate before sending control messages,
-    // so this is behavior-preserving; it blocks raw socket clients that skip ACCESS and send commands directly (incl. the API channel).
+    // when a REMOTE password is set, only honor control/API messages from connections that have authenticated
     if (id === REMOTE && get(remotePassword).length) {
         const PRE_AUTH_CHANNELS = ["PASSWORD", "ACCESS"]
         if (!PRE_AUTH_CHANNELS.includes(channel)) {

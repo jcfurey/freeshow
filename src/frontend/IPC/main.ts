@@ -20,6 +20,8 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
     const listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
+    sendMain(id, value, listenerId)
+
     // LISTENER
     let timeout: NodeJS.Timeout | null = null
     let settled = false
@@ -32,14 +34,6 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
     }
 
     const returnData: R | undefined = await new Promise((resolve) => {
-        // if the IPC bridge isn't available there's nothing to wait for; resolve now instead of blocking for the full timeout
-        if (!window.api) {
-            const waitIndex = currentlyAwaiting.indexOf(listenerId)
-            if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
-            resolve(undefined)
-            return
-        }
-
         timeout = setTimeout(() => {
             if (settled) return
             settled = true
@@ -49,7 +43,6 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
             resolve(undefined)
         }, waitingTimeout)
 
-        // register the listener BEFORE sending, so a fast reply can't arrive before we're listening
         window.api.receive(
             MAIN,
             (msg: MainReceiveValue, listenId: string) => {
@@ -62,8 +55,6 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
             },
             listenerId
         )
-
-        sendMain(id, value, listenerId)
     })
 
     if (callback) callback(returnData)

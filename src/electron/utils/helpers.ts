@@ -11,23 +11,11 @@ export function clone<T>(object: T): T {
     }
 }
 
-// keys might not be placed in the same order in JS object vs store file, so compare with key order normalized at every level
-function stableStringify(value: any): string {
-    if (value === null || typeof value !== "object") return JSON.stringify(value)
-    if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]" // preserve array order (e.g. slide order)
-    return (
-        "{" +
-        Object.keys(value)
-            .sort()
-            .map((key) => JSON.stringify(key) + ":" + stableStringify(value[key]))
-            .join(",") +
-        "}"
-    )
-}
+// a few keys might not be placed in the same order in JS object vs store file
 export function checkIfMatching(a: any, b: any): boolean {
     try {
         if (!a || !b || typeof a !== "object" || typeof b !== "object") return false
-        return stableStringify(a) === stableStringify(b)
+        return JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort())
     } catch (err) {
         console.warn("Failed to compare store data:", err)
         return false
@@ -88,10 +76,6 @@ export function getMachineId(): string {
         return id
     } catch (err) {
         console.warn("Could not get machine ID from config store:", err)
-        // avoid a shared constant: a fixed string would make every failing device share one identity,
-        // corrupting cloud-sync change tracking. Use a per-process random UUID instead.
-        if (!fallbackMachineId) fallbackMachineId = crypto.randomUUID()
-        return fallbackMachineId
+        return "fallback-machine-id"
     }
 }
-let fallbackMachineId = ""

@@ -91,7 +91,7 @@ export const exportOptions: BrowserWindowConstructorOptions = {
         preload: join(__dirname, "..", "preload"),
         webSecurity: isProd,
         nodeIntegration: !isProd,
-        contextIsolation: true, // keep the renderer isolated from the preload/Node context
+        // contextIsolation: true,
         // enableRemoteModule: false,
         autoplayPolicy: "no-user-gesture-required"
     }
