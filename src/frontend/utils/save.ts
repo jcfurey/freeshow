@@ -130,6 +130,15 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         activePopup.set("alert")
     }
 
+    // reset auto backup timer
+    if (customTriggers.backup) {
+        special.update((s) => {
+            // subtract one hour from time to keep it relatively the same with each backup
+            s.autoBackupPrevious = Date.now() - 3600000
+            return s
+        })
+    }
+
     const settings: { [key in SaveListSettings]: any } = {
         initialized: true,
         activeProject: get(activeProject),

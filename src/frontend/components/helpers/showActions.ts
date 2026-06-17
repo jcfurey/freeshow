@@ -874,7 +874,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             if (!timer) return min || sec ? "00" : "00:00"
 
             const today = new Date()
-            const currentTime = getCurrentTimerValue(timer, { id: timer.id }, today)
+            const currentTime = Math.floor(getCurrentTimerValue(timer, { id: timer.id }, today))
 
             const overflow = !!timer.overflow
             const isOverflowing = getTimerOverflow()
@@ -1125,7 +1125,7 @@ const dynamicValues = {
     audio_time: ({ audioTime }) => joinTime(secondsToTime(audioTime)),
     audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - audioTime : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
-    audio_volume: () => AudioPlayer.getVolume() * 100
+    audio_volume: () => Math.round(AudioPlayer.getVolume() * 100)
 }
 
 // placeholder values
