@@ -1,7 +1,7 @@
 # FreeShow → Upstream PR Roadmap
 
 **Fork:** `jcfurey/freeshow`  **Upstream:** `ChurchApps/FreeShow`  **PR base branch:** `dev`
-**Last updated:** 2026-06-16
+**Last updated:** 2026-06-17
 
 Seven themed branches carved from `dev`, each rebased onto **current `upstream/dev`** and verified.
 All seven open as PRs against upstream **`dev`**.
@@ -10,16 +10,16 @@ All seven open as PRs against upstream **`dev`**.
 
 | PR | Upstream PR | Status | @vassbo |
 |----|-------------|--------|---------|
-| 1 | `ChurchApps/FreeShow#3384` | **OPEN — ready, awaiting maintainer** | "ready whenever you want it" note posted (merges clean, builds, tests pass; Electron 37→40 flagged). **No maintainer reply yet.** The sole live PR. |
+| 1 | `ChurchApps/FreeShow#3384` | **OPEN — changes requested → all addressed (2026-06-17)** | @vassbo requested changes (**18 inline comments / 14 files**). All addressed on `split/1-deps-and-security` (`c53fb58` → `0c95118`): reverted electron/music-metadata/fast-xml-parser to his pins + dropped the contested audit changes; kept the advisory fixes. Awaiting re-review. |
 | 2 | `ChurchApps/FreeShow#3385` | **CLOSED by jcfurey (conceded)** | vassbo: *"b70680b is overkill, it's fine to use `new Function` … local app"* + stacking concern. Dropped safe-parser, closed; noted ESLint 8 is EOL, flat-config on fork. |
-| 3 | `ChurchApps/FreeShow#3386` | **CLOSED — parked** | Migration. Standalone `feat/svelte5-vite8-migration` built, portability + runtime + svelte-3→5-with-#3384 all verified; **opens after #3384 lands**. |
+| 3 | `#3386` → **`#3396`** | **#3386 closed; #3396 OPEN** | Migration. Standalone `feat/svelte5-vite8-migration` opened as **#3396** (un-stacked, off dev); portability + runtime + svelte-3→5-with-#3384 all verified. Sequenced after #3384 per @vassbo. |
 | 4 | `ChurchApps/FreeShow#3387` | **CLOSED by vassbo** | *"I don't think this is a benefit."* (vitest suite) |
 | 5 | `ChurchApps/FreeShow#3388` | **CLOSED by vassbo** | *"…just adds `: any` explicitly … already detected as `any`."* |
 | 6 | `ChurchApps/FreeShow#3389` | **CLOSED** | silently closed (build/release + transition + regressions) |
 | 7 | `ChurchApps/FreeShow#3390` | **✅ MERGED (`3823fb0`)** | Rebuild button removed per review → vassbo: *"Nice, great!"* → merged into dev. First modernization PR landed. |
 | 8 (feature) | `ChurchApps/FreeShow#3391` | **CLOSED by vassbo (declined)** | *"I really don't think it's necessary…"* → *"Yeah, I got that."* Conceded; stays on fork. |
 
-**Current (2026-06-16 ~18:35): 1 MERGED (#3390), 1 OPEN & ready (#3384), 6 CLOSED (#3385 conceded, #3386 parked, #3387/#3388/#3389/#3391).** Clean queue: **#3384 → migration**. Only #3384 awaits the maintainer; nothing else actionable on our side.
+**Current (2026-06-17): 1 MERGED (#3390), 1 OPEN (#3384 — changes requested, all addressed, awaiting re-review), migration opened as **#3396**, 5 CLOSED (#3385 conceded, #3386 superseded by #3396, #3387/#3388/#3389/#3391).** Clean queue: **#3384 → migration (#3396)**. #3384 awaits @vassbo's re-review.
 
 **Pattern:** @vassbo is declining most of the modernization as unnecessary for a *local desktop app* — he closed the **Svelte 5 migration itself (#3386)**, the **test suite (#3387)**, **strict types (#3388)**, and the **build/transition/regression bundle (#3389)**; and pushed back on **safe-eval (#3385)**, **search (#3390)**, and **scripture lock (#3391)**. Only **#3384 (security/deps)** has no comment. Closing #3386 also makes the transition fix moot upstream for now (no migration to attach to) — it survives as the `reference/svelte5-transition-global` branch + the posted explanation for if/when a migration happens.
 
@@ -42,7 +42,7 @@ After the #3386 reply, @vassbo (2026-06-16): *"Okay, that makes sense. But I wou
 - **Verified:** `npm run build` **passes** (frontend + servers + electron + postbuild). `svelte-check` **71** deferred type errors (compatibility mode preserved — the documented backlog; not in upstream CI). Commits: 11 migration + `85057c7` (deps reconcile) + `4c138a1` (Vite-8 type imports + transitions) + `475ad9e` (vitest 2→4, npm-ci fix).
 - **🔧 `npm ci` blocker found & fixed (2026-06-16, "double-check" pass) — `475ad9e`.** The committed lockfile pinned **esbuild 0.21.5** while vite 8 needs **^0.27/^0.28**: `vitest@2.1.9` drags in **vite 5** (esbuild 0.21), which npm hoists and can't satisfy vite 8. `npm install` tolerated it (build worked) but **`npm ci` — what upstream CI runs — failed to install.** Fix: bump **vitest 2→4** (`vitest@4` peer-supports vite ^8), regenerate a clean lockfile. Re-verified: **`npm ci` exit 0**, build 0 errors, unit tests pass on vitest 4, svelte-check 71. Also re-confirmed the **combined stack** (migration vitest4/vite8 + #3384 electron40/music-metadata11/npm-run-all2) **passes `npm ci`** — so it stays CI-installable once #3384 lands.
 - **✅ import.meta iife logo — VERIFIED real & migration-related, then FIXED (`0eae2cd`).** Empirically built the remote companion on Vite 8: it inlines the 378-byte webp as a `data:` URI but compiles the base to the string `"undefined"` (Vite 8/rolldown replaces `import.meta` with `{}`; Rollup/Vite 4 polyfilled `import.meta.url` — rolldown's own warning documents this). `new URL(dataURI, "undefined")` **throws "Invalid URL" at runtime** (tested) — so it's not cosmetic, it would break the RemoteShow login script, and it IS a Vite 4→8 regression. Fix: import the asset (`import freeshowLogo from "…webp"`) so Vite inlines it with no `import.meta`; added a `*.webp` ambient declaration. Verified: 0 EMPTY_IMPORT_META from our code (one remains in third-party `pdfjs-dist`, pre-existing), build 0 errors, svelte-check 71, npm ci passes. Migration now has **zero known issues**.
-- **NOT yet done:** user to open the new PR + post the reply.
+- **DONE:** opened as **`ChurchApps/FreeShow#3396`** (2026-06-17), with the justified title + description.
 - **Portability verified (2026-06-16):** svelte 5.56.3 / vite 8.0.16 / vite-plugin-svelte 7.1.2 / svelte-check 4.6.0 are already latest; plugin peers confirm correct alignment. Tested the next TS major (**TypeScript 6.0.3**): frontend/Svelte migration builds **0 errors** (portable); the only TS-6 friction is pre-existing electron-tsconfig strictness (`rootDir`/`node10`/`catch` unknown) that hits the whole repo, not this PR. Stays on `^5.9.3`.
 - **Runtime verified (Playwright):** the built Electron app **launches and renders correctly** (screenshot: Welcome dialog, panels, tabs, live clock). The smoke test fails only on **stale selectors** (`.main .dropdownElem`/`.showElem`) — and our `start.test.ts` is byte-identical to upstream/dev's, so it fails on plain `dev` too; the repair lives in the excluded #3384 (`bc61ed0`). Not a migration regression.
 - **@vassbo sequencing (2026-06-16):** *"No need to rush it, but it's probably good to get the other major PRs done and merged first?"* → the migration is **welcome, just sequenced after the foundational PRs**. Plan: **hold the migration PR** (branch is ready & waiting), prioritize landing **#3384 (security/deps)** and any wanted parts of **#3385**, then rebase + open the migration. No urgency.
@@ -57,6 +57,20 @@ Validated the full sequence vassbo wants (land #3384 on Svelte 3, then migration
 - **Migration ⊕ #3384 source merges with ZERO source conflicts** — only `package.json`/`package-lock.json` conflict (dep reconciliation, expected).
 - **Full combined stack** (dev + #3384 + migration) **installs and builds clean under Svelte 5** (svelte 5 + vite 8 + Electron 40 + music-metadata 11 + terser 1.0 + npm-run-all2 all coexist; `npm run build` exit 0, 0 MISSING_EXPORT/TS errors) and **37 tests pass**. Dep reconcile on conflict: keep svelte 5 (migration) + #3384's security bumps (`npm-run-all2 ^9`, `tmp ^0.2.7`), drop the Svelte-3-only packages.
 - **Conclusion:** the migration **works from Svelte 3.x (with #3384) → Svelte 5**. When #3384 lands, rebasing + opening the migration is mechanical (validated). Throwaway test branches not pushed.
+
+### 🔄 #3384 review round — @vassbo requested changes (2026-06-17)
+@vassbo reviewed #3384 (**"Please fix all my review comments"**, *changes requested*) with **18 inline comments across 14 files** (two passes — several in collapsed/outdated threads). All addressed on `split/1-deps-and-security` (tip `c53fb58` → `0c95118`, **+4 commits**: `f529363`, `cc5b8e7`, `09e6b34`, `0c95118`); `npm ci` + `npm run build` + unit tests green after each.
+
+**Decision: drop everything contested (revert toward his pins), keep only advisory fixes with no runtime coupling.**
+
+- **Dependencies reverted to dev's pins** (deferred to focused follow-ups): electron ^40→**^37.10.3** (+ electron-builder ^26.0.19), music-metadata ^11→**^7.14.0** (v11 is ESM-only — unsafe to `require()` from the CJS main), fast-xml-parser ^5.8.0→**5.4.1**; also reverted the incidental electron-updater/better-sqlite3 bumps to keep the dep diff minimal.
+- **Source — contested audit changes reverted out of the PR entirely:** `data/save.ts` (pendingSave queue), `utils/files.ts` watcher (kept the `readExifData` always-resolve fix), `audio/nowPlaying.ts` (single-pass regex), `utils/helpers.ts` (`stableStringify` + non-constant fallback machine id), `utils/windowOptions.ts` (export-window `contextIsolation`), `webrtc/WebRtcHost.ts` (navigation hardening), `frontend/IPC/main.ts` (`window.api` guard).
+- **Source — cleaned up & kept:** `data/thumbnails.ts` (moved lock-release into `finish()`, dropped the now-redundant `delete`), `IPC/main.ts` (kept the shared reply dispatcher, removed previous-state comments), `frontend/utils/sendData.ts` (kept the REMOTE auth gate, shortened the comment), `.gitattributes` (trimmed comment).
+- **Kept (genuine hardening, no runtime coupling):** `@rollup/plugin-terser` 1.0 (serialize-javascript RCE), `npm-run-all`→`npm-run-all2` (drops unmaintained pkg + cross-spawn ReDoS), `tmp` ^0.2.7 + shell-quote/tmp overrides, `engines.node`, committed lockfile.
+- **Preferences:** removed `.nvmrc` (kept `engines.node`); `ci.yml` trigger → `workflow_dispatch` (manual).
+- **Scope now ≈15 source files** (down from 20); title/description rewritten to drop the reverted electron/music-metadata claims.
+
+**Deferred follow-up PRs** (once #3384 lands): (1) **electron 37→40** with the macOS `NSAudioCaptureUsageDescription` Info.plist entry + the macOS 11 drop; (2) **music-metadata v11** via dynamic `import()` at the CJS call sites (`audio.ts`, `nowPlaying.ts`); (3) **fast-xml-parser 5.x** once the original 5.4.1-pin reason is confirmed resolved.
 
 ## Submission strategy
 
@@ -75,7 +89,7 @@ upstream/dev ─┬─ PR1 ─ PR2 ─ PR3 ─ PR4 ─ PR5 ─ PR6
 
 | PR | Branch | Tip | Depends on | Commits | Size (own delta) |
 |----|--------|-----|------------|---------|------------------|
-| 1 | `split/1-deps-and-security` | `c53fb58` | — (upstream/dev) | 10 | 23 files (line count = `package-lock.json`, collapsed via `.gitattributes`) |
+| 1 | `split/1-deps-and-security` | `0c95118` | — (upstream/dev) | 14 | ~15 source files (line count = `package-lock.json`, collapsed via `.gitattributes`) |
 | 2 | `split/2-eslint9-and-safe-eval` | `afedf4c` | PR1 | 4 | 298 files (+2390 / −2095) — mostly `eslint --fix` |
 | 3 | `split/3-svelte5-vite8` | `e163a7a` | PR2 | 11 | 138 files (+4161 / −2619) |
 | 4 | `split/4-unit-test-suite` | `049cce0` | PR3 | 13 | 36 files (+3153 / −3) |
@@ -204,27 +218,28 @@ Deep audit of the output/transition pipeline for the long-standing flicker compl
 ---
 
 ## PR 1 — Security & dependency hardening
-**Branch:** `split/1-deps-and-security` → **base:** `dev` · independent (open now) · 10 commits
+**Branch:** `split/1-deps-and-security` → **base:** `dev` · independent (open now) · 14 commits · **changes requested → all addressed (2026-06-17)**
 
-**Title:** `Security & dependency hardening: clear critical/high advisories, Electron 37→40, commit lockfile`
+**Title:** `Security & dependency hardening: clear npm advisories + commit lockfile`
 
-**Body:**
-> Hardens the dependency tree and fixes correctness/security findings, with no functional changes to the app.
+**Body:** *(updated after @vassbo's 2026-06-17 review — see the "#3384 review round" section above)*
+> Hardens the dependency tree and fixes a few correctness findings, with no functional changes to the app.
 >
-> **Dependencies / advisories**
-> - Clear all **critical** + 3 **high** npm advisories (low-risk subset)
-> - Electron **37 → 40** (clears the Electron advisory)
-> - `music-metadata` **7 → 11** (ASF DoS high + file-type moderate)
-> - `@rollup/plugin-terser` **0.4 → 1.0** (serialize-javascript RCE high)
-> - Commit `package-lock.json` and mark it `generated`/binary so it's collapsed in diffs
+> **Dependencies / advisories** (kept after review — no runtime coupling):
+> - `@rollup/plugin-terser` **0.4 → 1.0** (serialize-javascript RCE)
+> - `npm-run-all` → `npm-run-all2` (drops the unmaintained package + its cross-spawn ReDoS)
+> - `tmp` → ^0.2.7 + `overrides` for `shell-quote` ^1.8.4 / `tmp` ^0.2.7 (path traversal / injection)
+> - add `engines.node`; commit `package-lock.json` and mark it `generated` so it's collapsed in diffs
 >
-> **Correctness/security fixes** across `src/electron/*` (IPC, save, zip, servers, webrtc) and a few frontend helpers, surfaced by a static review.
+> Per review, the Electron 37→40, `music-metadata` 7→11, and `fast-xml-parser` 5.x bumps were **reverted** to their pins — they return as focused follow-ups with the breaking-change handling.
 >
-> **Tooling:** add `.nvmrc`, `.gitattributes`, and a CI workflow (`.github/workflows/ci.yml`); repair the stale Playwright smoke test for the current UI + Electron 40.
+> **Source:** small fixes surfaced by a static review (thumbnails lock-release, `files.ts` EXIF resolve, a shared IPC reply dispatcher, a REMOTE auth gate, minor robustness in servers/zip/csv/media). Contested audit changes flagged in review were reverted.
 >
-> **Verification:** `npm audit` no longer reports critical/high in the addressed set; Playwright smoke test passes.
+> **Tooling:** manual CI workflow (`.github/workflows/ci.yml`); repaired Playwright smoke test.
 >
-> *Note:* the line count is dominated by `package-lock.json` churn (collapsed via `.gitattributes`); the reviewable source delta is small.
+> **Verification:** `npm ci`, `npm run build`, and unit tests pass.
+>
+> *Note:* the line count is dominated by `package-lock.json` (collapsed via `.gitattributes`); the reviewable source delta is ~15 files.
 
 ---
 
