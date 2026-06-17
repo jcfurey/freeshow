@@ -1009,7 +1009,6 @@ async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T)
 // - auto import .project files
 // - suggest importing videos/images/pdfs
 // - WIP extract & import zip files with media content
-let downloadsWatcher: import("fs").FSWatcher | null = null
 export async function detectNewFiles() {
     if (!getStore("SETTINGS").initialized) return
 
@@ -1048,13 +1047,9 @@ export async function detectNewFiles() {
 
     sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
 
-    // watch for file changes (close any previous watcher first, so repeated calls don't stack watchers)
-    if (downloadsWatcher) {
-        downloadsWatcher.close()
-        downloadsWatcher = null
-    }
+    // watch for file changes
     try {
-        downloadsWatcher = fs.watch(downloadsFolder, { persistent: false }, async (eventType, filename) => {
+        fs.watch(downloadsFolder, { persistent: false }, async (eventType, filename) => {
             if (eventType !== "rename" || !filename) return
 
             const ext = path.extname(filename).toLowerCase()

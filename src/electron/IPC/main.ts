@@ -38,8 +38,7 @@ export async function receiveMain(e: Electron.IpcMainEvent, msg: MainReceiveValu
 }
 
 const currentlyAwaiting: string[] = []
-// single shared MAIN listener that routes replies to the awaiting request by its listenerId,
-// instead of registering a new global ipcMain.on per request (which ran for every message and risked MaxListenersExceededWarning)
+// single shared MAIN listener that routes each reply to its awaiting request by listenerId
 const pendingToMain = new Map<string, (msg: ToMainReceiveValue) => void>()
 let toMainDispatcherRegistered = false
 function ensureToMainDispatcher() {
@@ -80,7 +79,6 @@ export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnP
             resolve(null)
         }, waitingTimeout)
 
-        // register the resolver BEFORE sending, so a fast reply can't arrive before we're listening
         pendingToMain.set(listenerId, (msg: ToMainReceiveValue) => {
             if (settled) return
             if (msg.channel !== id) return

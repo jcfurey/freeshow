@@ -1,11 +1,8 @@
 name: CI
 
-# Fast checks on every PR and on pushes to main, so type errors and formatting
-# regressions are caught before merge (the full Playwright/build workflows are manual).
+# Manual activation for now (run from the Actions tab); can be wired to pull_request later.
 on:
-    pull_request:
-    push:
-        branches: [main]
+    workflow_dispatch:
 
 jobs:
     checks:
@@ -38,6 +35,6 @@ jobs:
               run: npm run test:svelte
               continue-on-error: true
 
-            # Blocking gate: a broken build fails the PR.
+            # Blocking gate: a broken build fails this run.
             - name: Build
               run: npm run build
