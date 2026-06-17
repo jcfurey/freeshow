@@ -12,14 +12,14 @@ All seven open as PRs against upstream **`dev`**.
 |----|-------------|--------|---------|
 | 1 | `ChurchApps/FreeShow#3384` | **✅ MERGED (`2e6bbbd`, 2026-06-17)** | @vassbo requested changes (**18 inline comments / 14 files**); all addressed on `split/1-deps-and-security` (`c53fb58` → `0c95118`): reverted electron/music-metadata/fast-xml-parser to his pins + dropped the contested audit changes, kept the advisory fixes. **Merged into upstream/dev** — the migration (#3396) now rebases on top of it. |
 | 2 | `ChurchApps/FreeShow#3385` | **CLOSED by jcfurey (conceded)** | vassbo: *"b70680b is overkill, it's fine to use `new Function` … local app"* + stacking concern. Dropped safe-parser, closed; noted ESLint 8 is EOL, flat-config on fork. |
-| 3 | `#3386` → **`#3396`** | **#3386 closed; #3396 OPEN — active review (all rounds addressed)** | Migration. Standalone `feat/svelte5-vite8-migration`, rebased onto upstream/dev **post-#3384** (`2e6bbbd`). @vassbo reviewing: reconstructed to drop the contested new files / a11y / self-closing / node-pin, then 3 nit rounds resolved (tip `f94218d`). See "#3396 review rounds" below. |
+| 3 | `#3386` → **`#3396`** | **✅ MERGED (squash `47b4190`, 2026-06-17) → upstream `svelte5`** | Migration. @vassbo squash-merged it into a **`svelte5` integration branch (not `dev`)** to test first before bringing it to dev. All 4 review rounds resolved (incl. the accepted webp approach); PR head was `e8252fb`. See "#3396 review rounds" below. |
 | 4 | `ChurchApps/FreeShow#3387` | **CLOSED by vassbo** | *"I don't think this is a benefit."* (vitest suite) |
 | 5 | `ChurchApps/FreeShow#3388` | **CLOSED by vassbo** | *"…just adds `: any` explicitly … already detected as `any`."* |
 | 6 | `ChurchApps/FreeShow#3389` | **CLOSED** | silently closed (build/release + transition + regressions) |
 | 7 | `ChurchApps/FreeShow#3390` | **✅ MERGED (`3823fb0`)** | Rebuild button removed per review → vassbo: *"Nice, great!"* → merged into dev. First modernization PR landed. |
 | 8 (feature) | `ChurchApps/FreeShow#3391` | **CLOSED by vassbo (declined)** | *"I really don't think it's necessary…"* → *"Yeah, I got that."* Conceded; stays on fork. |
 
-**Current (2026-06-17): 2 MERGED (#3390 search, #3384 security/deps `2e6bbbd`), 1 OPEN (migration **#3396** — active review, all rounds addressed, tip `f94218d`), 5 CLOSED (#3385 conceded, #3386 superseded by #3396, #3387/#3388/#3389/#3391).** With #3384 landed, the migration (#3396) is the **sole open PR** and rebases cleanly on top of it.
+**Current (2026-06-17): 3 MERGED (#3390 search, #3384 security/deps `2e6bbbd`, #3396 migration squash `47b4190` → upstream `svelte5`), 5 CLOSED (#3385 conceded, #3386 superseded by #3396, #3387/#3388/#3389/#3391).** #3396 is merged into upstream's **`svelte5` test branch (not yet `dev`)** — vassbo is validating there before it lands in `dev`. Deferred follow-ups (electron 37→40, music-metadata v11, fast-xml-parser 5.x) can now proceed off `upstream/dev`.
 
 **Pattern:** @vassbo is declining most of the modernization as unnecessary for a *local desktop app* — he closed the **Svelte 5 migration itself (#3386)**, the **test suite (#3387)**, **strict types (#3388)**, and the **build/transition/regression bundle (#3389)**; and pushed back on **safe-eval (#3385)**, **search (#3390)**, and **scripture lock (#3391)**. Only **#3384 (security/deps)** has no comment. Closing #3386 also makes the transition fix moot upstream for now (no migration to attach to) — it survives as the `reference/svelte5-transition-global` branch + the posted explanation for if/when a migration happens.
 
@@ -95,7 +95,9 @@ Validated the full sequence vassbo wants (land #3384 on Svelte 3, then migration
 
 **Round 4 — webp accepted + comment trimmed (`e8252fb`).** @vassbo on the Auth.svelte/webp thread: *"Thanks. I guess this will work then, but we can shorten the comment."* — i.e. **accepted the contested asset-import approach**; shortened the import comment from 3 lines to 1.
 
-**Status (tip `e8252fb`):** all of @vassbo's threads addressed (the webp approach now accepted). No conflicts with base. Awaiting next review pass / dismissal of the "changes requested" gate.
+**Round 5 — MERGED (`47b4190`).** @vassbo squash-merged #3396 (PR head `e8252fb`) as `47b4190` into a new upstream **`svelte5`** branch — *not* `dev` — noting he'll "test a bit on a separate branch first." Verified via upstream refs: `svelte5` = `47b4190` (squash, parent `e12355a`), `refs/pull/3396/head` = `e8252fb`, and `dev` (`5465acf`) does not contain it.
+
+**Status:** ✅ **MERGED** into upstream `svelte5` (integration/test branch). Reaches `dev` only after vassbo's testing there. All review threads resolved; nothing left on our side for #3396. Migration-independent follow-ups (electron / music-metadata / fast-xml-parser) tracked under the #3384 deferred list.
 
 ## Submission strategy
 
