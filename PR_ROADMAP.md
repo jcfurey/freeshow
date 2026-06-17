@@ -93,7 +93,9 @@ Validated the full sequence vassbo wants (land #3384 on Svelte 3, then migration
 - `SlideContent.svelte` → shortened the `transitionId`/`{#key}` comment from 4 lines to 2.
 - `vite.config.mjs` → dropped the dead `?? assetInfo.name` fallback. Verified against `rollup.d.ts`: `PreRenderedAsset.name` is the **@deprecated** alias of `names[0]` (`undefined` when `names` is empty), so `assetInfo.names?.[0] ?? ""` already covers every case. Re-ran the frontend production build (`build:frontend:prod`, exit 0) — `bundle.js` + `bundle.css` still emit correctly.
 
-**Status:** branch tip `f94218d`, pushed; no conflicts with base; all of @vassbo's threads addressed. Awaiting next review pass.
+**Round 4 — webp accepted + comment trimmed (`e8252fb`).** @vassbo on the Auth.svelte/webp thread: *"Thanks. I guess this will work then, but we can shorten the comment."* — i.e. **accepted the contested asset-import approach**; shortened the import comment from 3 lines to 1.
+
+**Status (tip `e8252fb`):** all of @vassbo's threads addressed (the webp approach now accepted). No conflicts with base. Awaiting next review pass / dismissal of the "changes requested" gate.
 
 ## Submission strategy
 
