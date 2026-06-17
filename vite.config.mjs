@@ -11,8 +11,8 @@ export default defineConfig({
                 dev: !production
             },
             onwarn: (warning, handler) => {
-                // disable A11y warnings (Svelte 5 renamed codes from a11y-* to a11y_*)
-                if (warning.code.startsWith("a11y-") || warning.code.startsWith("a11y_")) return
+                // disable A11y warnings (Svelte 5 renamed the codes to a11y_*)
+                if (warning.code.startsWith("a11y_")) return
                 handler(warning)
             }
         })
