@@ -13,6 +13,8 @@ import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Interaction, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
+import type { BibleNotes, BibleStudySettings, CrossReferenceMap, StrongsLexicon } from "../types/BibleStudy"
+import { defaultBibleStudySettings } from "../types/BibleStudy"
 import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
@@ -318,6 +320,14 @@ export const scriptureSettings: Writable<any> = writable({
     splitLongVersesSuffix: false,
     smartSplit: true
 }) // {default}
+
+// ADVANCED BIBLE ENGINE (interlinear, Strong's, cross references, study mode)
+export const strongsLexicon: Writable<StrongsLexicon> = writable({}) // {} imported Strong's dictionary
+export const crossReferences: Writable<CrossReferenceMap> = writable({}) // {} imported cross references
+export const bibleNotes: Writable<BibleNotes> = writable({}) // {} user study notes per verse
+export const bibleStudySettings: Writable<BibleStudySettings> = writable({ ...defaultBibleStudySettings }) // {default}
+// UI state: when set, the Bible Study overlay opens at this reference (not persisted)
+export const bibleStudyState: Writable<{ active: boolean; bibleId?: string; book?: number; chapter?: number; verse?: number }> = writable({ active: false })
 
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}

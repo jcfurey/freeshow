@@ -42,6 +42,7 @@ import Export from "../components/main/popups/export/Export.svelte"
 import FindReplace from "../components/main/popups/FindReplace.svelte"
 import History from "../components/main/popups/History.svelte"
 import Import from "../components/main/popups/Import.svelte"
+import ImportBibleStudyData from "../components/main/popups/ImportBibleStudyData.svelte"
 import ImportScripture from "../components/main/popups/ImportScripture.svelte"
 import Initialize from "../components/main/popups/Initialize.svelte"
 import InteractionInput from "../components/main/popups/InteractionInput.svelte"
@@ -124,6 +125,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     media_fit: MediaFit,
     metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
+    import_bible_study: ImportBibleStudyData,
     create_collection: CreateCollection,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,

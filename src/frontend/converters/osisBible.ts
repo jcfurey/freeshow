@@ -1,5 +1,7 @@
 import type { Bible, Book, Chapter, Verse } from "json-bible/lib/Bible"
 import { uid } from "uid"
+import { extractInterlinearWords, hasStrongsTagging, unwrapTaggedWords } from "../../common/scripture/bibleStudy"
+import type { InterlinearWord } from "../../types/BibleStudy"
 import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "../stores"
 import { setActiveScripture } from "./bible"
@@ -55,11 +57,23 @@ async function XMLtoObject(xml: string) {
                 let text = verse["#text"] || ""
                 if (!text.trim()) return
 
+                // Advanced Bible Engine: preserve word-by-word interlinear data (Strong's numbers,
+                // morphology) when the OSIS source tags words with <w lemma="strong:..."> markup.
+                let words: InterlinearWord[] | undefined
+                if (hasStrongsTagging(text)) {
+                    words = extractInterlinearWords(text, bookNumber)
+                }
+
                 text = text.replace(/<q(?:\s+xmlns="[^"]*")?\s+who="Jesus"\s+marker="">(.*?)<\/q>/g, '<span class="wj">$1</span>')
+
+                // remove the Strong's/<w> markup from the display text (kept separately in `words`)
+                if (words?.length) text = unwrapTaggedWords(text)
 
                 const verseNumber = verse["@osisID"].split(".")?.[2] ?? verseIndex + 1
 
-                verses.push({ number: verseNumber, text })
+                const verseData: Verse & { words?: InterlinearWord[] } = { number: verseNumber, text }
+                if (words?.length) verseData.words = words
+                verses.push(verseData)
             })
 
             chapters.push({ number: chapterNumber, verses })

@@ -1,3 +1,4 @@
+import { defaultBibleStudySettings } from "../../types/BibleStudy"
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 
 export const defaultConfig = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, dataPath: null, disableHardwareAcceleration: null }
@@ -142,6 +143,8 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         showVerse: true,
         referenceDivider: ":"
     },
+    bibleNotes: {},
+    bibleStudySettings: { ...defaultBibleStudySettings },
     groups: defaultGroups,
     midiIn: {},
     emitters: {},

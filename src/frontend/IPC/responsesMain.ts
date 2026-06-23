@@ -50,6 +50,7 @@ import {
     alertMessage,
     audioData,
     contentProviderData,
+    crossReferences,
     currentOutputSettings,
     dataPath,
     driveKeys,
@@ -72,6 +73,7 @@ import {
     showsCache,
     spellcheck,
     stageShows,
+    strongsLexicon,
     templates,
     textCache,
     theme,
@@ -147,6 +149,12 @@ export const mainResponses: MainResponses = {
     [Main.CACHE]: (a) => {
         textCache.set(a.text || {})
         invalidateSearchIndex()
+    },
+    [Main.BIBLE_STUDY]: (a) => {
+        if (!a || typeof a !== "object") return
+        // notes & settings are distributed via SYNCED_SETTINGS (updateSyncedSettings)
+        strongsLexicon.set(a.lexicon || {})
+        crossReferences.set(a.crossReferences || {})
     },
     [Main.USAGE]: (a) => usageLog.set(a),
 

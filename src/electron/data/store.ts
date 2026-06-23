@@ -9,6 +9,7 @@ import type { Event } from "../../types/Calendar"
 import type { History } from "../../types/History"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
+import type { BibleStudyData } from "../../types/BibleStudy"
 import type { Config, ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
@@ -39,6 +40,10 @@ export const storeFilesData = {
 
     HISTORY: { fileName: "history", portable: false, defaults: {} as { undo: History[]; redo: History[] }, minify: true },
     MEDIA: { fileName: "media", portable: false, defaults: {} as Media, minify: true },
+
+    // Advanced Bible Engine reference data (Strong's lexicon + cross references). Notes & settings
+    // are stored in SYNCED_SETTINGS so they sync across devices.
+    BIBLE_STUDY: { fileName: "bible_study", portable: true, defaults: { lexicon: {}, crossReferences: {} } as BibleStudyData, minify: true },
 
     CACHE: { fileName: "cache", portable: false, defaults: {} as any, minify: true },
     CACHE_SYNC: { fileName: "cache_sync", portable: false, defaults: {} as any, minify: true },

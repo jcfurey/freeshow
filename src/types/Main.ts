@@ -405,6 +405,7 @@ export type Popups =
     | "media_fit"
     | "metadata_display"
     | "import_scripture"
+    | "import_bible_study"
     | "create_collection"
     | "edit_event"
     | "choose_chord"

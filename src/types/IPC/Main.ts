@@ -2,6 +2,7 @@ import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
+import type { BibleStudyData } from "../BibleStudy"
 import type { SyncProviderId } from "../../electron/cloud/syncManager"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicense } from "../../electron/contentProviders/base/types"
 import type { _store } from "../../electron/data/store"
@@ -45,6 +46,7 @@ export enum Main {
     HISTORY = "HISTORY",
     USAGE = "USAGE",
     CACHE = "CACHE",
+    BIBLE_STUDY = "BIBLE_STUDY",
     // WINDOW
     CLOSE = "CLOSE",
     MAXIMIZE = "MAXIMIZE",
@@ -283,6 +285,7 @@ export interface MainReturnPayloads {
     [Main.EVENTS]: { [key: string]: Event }
     [Main.MEDIA]: Media
     [Main.THEMES]: { [key: string]: Themes }
+    [Main.BIBLE_STUDY]: BibleStudyData
     [Main.DRIVE_API_KEY]: any
     [Main.HISTORY]: { undo: History[]; redo: History[] }
     [Main.USAGE]: any
