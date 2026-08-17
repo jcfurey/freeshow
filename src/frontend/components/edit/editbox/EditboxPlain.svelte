@@ -116,7 +116,14 @@
     $: textTransform = !!(styles["text-transform"] && styles["text-transform"] !== "none")
 
     let conditionsUpdater = 0
-    const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
+    let isMic = false
+    $: isMic = JSON.stringify(item?.conditions?.showItem || "").includes('"element":"volume"')
+
+    let updaterInterval: NodeJS.Timeout
+    $: {
+        clearInterval(updaterInterval)
+        updaterInterval = setInterval(() => conditionsUpdater++, isMic ? 100 : 3000)
+    }
     onDestroy(() => clearInterval(updaterInterval))
 
     $: showItemState = isConditionMet(item?.conditions?.showItem, getItemText(item), "default", conditionsUpdater)
@@ -124,7 +131,7 @@
 
 <!-- all icons are square, so only corner resizers need to be active -->
 {#if !hideMovebox}
-    <Movebox {ratio} itemStyle={item?.style} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon"} />
+    <Movebox {ratio} itemStyle={item?.style} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon" && item?.id !== "empty"} />
 {/if}
 
 <div class="actions">

@@ -10,6 +10,7 @@ export const spotifyIsFading = writable(false)
 
 let fetchInt: any
 let progressInt: any
+let unsubscribeState: (() => void) | null = null
 let fetching = false
 let lastFetched: SpotifyState | null = null
 let lock = 0
@@ -18,7 +19,7 @@ let lastArt: string | null = null
 export function initSpotifyManager() {
     let currentInterval = 1000
     let lastUsed = Date.now()
-    spotifyState.subscribe((s) => {
+    unsubscribeState = spotifyState.subscribe((s) => {
         if (s && (s.isPlaying || s.positionSec > 0)) lastUsed = Date.now()
     })
 
@@ -44,6 +45,10 @@ export function initSpotifyManager() {
 export function destroySpotifyManager() {
     clearInterval(fetchInt)
     clearInterval(progressInt)
+    if (unsubscribeState) {
+        unsubscribeState()
+        unsubscribeState = null
+    }
 }
 
 async function fetchState() {
@@ -62,7 +67,9 @@ async function fetchState() {
             if (curr && lastFetched && res.title === curr.title) {
                 const diff = Math.abs(res.positionSec - curr.positionSec)
                 if (Date.now() < lock) res.isPlaying = curr.isPlaying
-                if (diff < 1.5 && res.isPlaying === curr.isPlaying) {
+
+                const isStale = res.isPlaying && lastFetched.isPlaying && res.positionSec === lastFetched.positionSec
+                if ((isStale || diff < 1.5) && res.isPlaying === curr.isPlaying) {
                     newState = { ...curr, isPlaying: res.isPlaying, durationSec: res.durationSec, volume: res.volume }
                 }
             }

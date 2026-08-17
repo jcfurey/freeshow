@@ -17,7 +17,7 @@ const oscActions = {
     },
     show: {
         _id: (id: string) => ({
-            // open: () => ({ action: "id_select_show", id }),
+            open: () => ({ action: "id_select_show", id }),
             start: () => ({ action: "start_show", id })
             // slide: () => ({
             //     next: () => ({ action: "next_slide", id }),
@@ -87,6 +87,6 @@ function parsePath(path) {
 
 export type OSC_SIGNAL = { url?: string; port?: string }
 export function emitOSC(signal: OSC_SIGNAL, data: string) {
-    data = getDynamicValue(data)
+    data = data.includes("{") ? getDynamicValue(data) : data
     sendMain(Main.EMIT_OSC, { signal, data })
 }

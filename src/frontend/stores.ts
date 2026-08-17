@@ -6,19 +6,20 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
+import type { AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
+import type { AudioRoutingConfig } from "../types/AudioRouting"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
 import type { History, HistoryNew } from "../types/History"
-import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
+import type { ActiveEdit, Clipboard, Interaction, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
-import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
-import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
-import type { Outputs } from "./../types/Output"
+import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
+import type { Outputs, RtmpStatus } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
 import type { CompressorConfig } from "./audio/effects/audioCompressor"
@@ -29,7 +30,7 @@ import type { LimiterConfig } from "./audio/effects/audioLimiter"
 import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
 import type { ReverbConfig } from "./audio/effects/audioReverb"
 import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
-import type { API_metronome } from "./components/actions/api"
+import type { PlayingVideoState, VideoAudioData } from "./components/media/video/videoPlayer"
 
 // ----- TEMPORARY VARIABLES -----
 
@@ -84,7 +85,8 @@ export const runningActions: Writable<string[]> = writable([])
 export const scriptureMode: Writable<"grid" | "list"> = writable("list")
 export const providerConnections: Writable<{ [key in ContentProviderId]?: boolean }> = writable({})
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
-export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string }>> = writable(new Map())
+export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string; name?: string }>> = writable(new Map())
+export const rtmpStatus: Writable<{ [outputId: string]: RtmpStatus }> = writable({})
 export const pdfImports: Writable<Map<string, { name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
 export const cloudUsers: Writable<{ displayName: string; color: string; lastUpdate?: number; activePage?: string; activeShow?: ShowRef }[]> = writable([])
@@ -96,6 +98,8 @@ export const showNotesActive: Writable<boolean> = writable(false)
 export const slideNotesActive: Writable<boolean> = writable(false)
 export const templateApplied: Writable<boolean> = writable(false)
 export const activeAudioEffects: Writable<string> = writable("")
+export const openedInteractionId: Writable<string> = writable("")
+export const activeInteractions: Writable<string[]> = writable([])
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -112,10 +116,10 @@ export const nextActionEventStart: Writable<any> = writable({})
 export const nextActionEventPaused: Writable<boolean> = writable(false)
 
 // AUDIO
-export const audioChannels: Writable<AudioChannel[]> = writable([])
 export const playingAudio: Writable<{ [key: string]: AudioData }> = writable({})
 export const playingAudioPaths: Writable<string[]> = writable([])
-export const playingVideos: Writable<any[]> = writable([])
+export const playingVideos: Writable<VideoAudioData[]> = writable([])
+export const playingVideoState: Writable<{ [key: string]: PlayingVideoState }> = writable({})
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)
 export const visualizerData: Writable<any> = writable(null)
@@ -137,8 +141,6 @@ export const outputSlideCache: Writable<any> = writable({})
 export const previewBuffers: Writable<any> = writable({})
 export const ndiData: Writable<any> = writable({})
 export const closeAd: Writable<boolean> = writable(false)
-export const videosData: Writable<any> = writable({})
-export const videosTime: Writable<any> = writable({})
 export const textLoaded: Writable<boolean> = writable(false)
 export const toggleOutputEnabled: Writable<boolean> = writable(false)
 export const customMessageCredits: Writable<string> = writable("")
@@ -147,7 +149,6 @@ export const presentationApps: Writable<null | string[]> = writable(null)
 export const colorbars: Writable<{ [key: string]: string }> = writable({})
 export const livePrepare: Writable<{ [key: string]: boolean }> = writable({})
 export const overlayTimers: Writable<{ [key: string]: { outputId: string; overlayId: string; timer: NodeJS.Timeout } }> = writable({})
-export const slideVideoData: Writable<{ [key: string]: { [key: string]: { currentTime: number; duration: number; isPaused: boolean; loop?: boolean } } }> = writable({})
 export const slideTimelineSpeedMultiplier: Writable<number> = writable(1)
 
 // EXPORT
@@ -160,10 +161,9 @@ export const quickTextCache: Writable<{ name: string; text: string; fromSearch?:
 export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
 export const cachePath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
-export const actionHistory: Writable<{ action: string; data: any; time: number; count: number }[]> = writable([])
+export const actionHistory: Writable<{ action: string; data: any; time: number; count: number; source?: string }[]> = writable([])
 export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult } }> = writable({})
 export const customScriptureBooks: Writable<{ [key: string]: string[] }> = writable({})
-export const scriptureHistoryUsed: Writable<boolean> = writable(false)
 export const actionRevealUsed: Writable<boolean> = writable(false)
 export const actionMoreOptionsUsed: Writable<boolean> = writable(false)
 export const dynamicValuesRevealUsed: Writable<boolean> = writable(false)
@@ -177,7 +177,7 @@ export const refreshListBoxes: Writable<number> = writable(-1)
 export const triggerAutoSplit: Writable<boolean> = writable(false)
 export const storedEditMenuState: Writable<any> = writable({})
 export const copyPasteEdit: Writable<any> = writable({})
-export const textEditActive: Writable<boolean> = writable(false)
+export const editMode: Writable<EditMode> = writable("default")
 export const textEditZoom: Writable<number> = writable(10)
 export const spellcheck: Writable<{ misspelled: string; suggestions: string[] } | null> = writable(null)
 
@@ -207,6 +207,7 @@ export const disableDragging: Writable<boolean> = writable(false)
 export const activeDropId: Writable<string> = writable("")
 export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
 export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
+export const cachedDynamicValues: Writable<{ [key: string]: string }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
 export const statusIndicator: Writable<string> = writable("")
 
@@ -244,6 +245,9 @@ export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 // VARIABLES
 export const variables: Writable<{ [key: string]: Variable }> = writable({}) // {}
 
+// INTERACTIONS
+export const interactions: Writable<{ [key: string]: Interaction }> = writable({}) // {}
+
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
@@ -260,10 +264,9 @@ export const deletedDefaults: Writable<{ [key: string]: string[] }> = writable({
 export const audioFolders: Writable<Categories> = writable({}) // {default}
 export const audioStreams: Writable<{ [key: string]: AudioStream }> = writable({}) // {}
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
-export const volume: Writable<number> = writable(1) // 1
-export const gain: Writable<number> = writable(1) // DEPRECATED - only use volume
 export const audioChannelsData: Writable<{ [key: string]: AudioChannelData }> = writable({}) // {}
-export const metronome: Writable<API_metronome> = writable({}) // {}
+export const metronome: Writable<MetronomeSettings> = writable({}) // {}
+export const audioRouting: Writable<AudioRoutingConfig | null> = writable(null) // {init}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
 export interface AudioEffectsConfig {
     equalizer: EqualizerConfig
@@ -408,7 +411,6 @@ export const $ = {
     settingsTab,
     projectView,
     eventEdit,
-    audioChannels,
     playingAudio,
     playingVideos,
     visualizerData,
@@ -446,7 +448,6 @@ export const $ = {
     overlayCategories,
     overlays,
     audioFolders,
-    volume,
     playerVideos,
     templateCategories,
     templates,

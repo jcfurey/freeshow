@@ -93,6 +93,7 @@ export class WebRtcHost {
     static start() {
         if (this.started) return
         this.started = true
+        console.log("[WebRtcHost] Starting WebRTC host...")
 
         this.window = new BrowserWindow({
             show: false,
@@ -117,7 +118,10 @@ export class WebRtcHost {
     }
 
     static stop() {
+        if (!this.started) return
         this.started = false
+        console.log("[WebRtcHost] Stopping WebRTC host...")
+
         if (this.window && !this.window.isDestroyed()) {
             this.window.destroy()
             this.window = null
@@ -137,12 +141,12 @@ export class WebRtcHost {
     }
 
     /** Start a WHIP stream for a specific output window. */
-    static startWhip(outputId: string, url: string, token?: string) {
+    static startWhip(outputId: string, url: string, token?: string, options?: { fps?: number; bitrate?: number }) {
         if (!this.isRunning()) {
             console.warn(`[WebRtcHost] Cannot start WHIP for ${outputId}: Host is not running.`)
             return
         }
-        this.window!.webContents.send("START_WHIP", { outputId, url, token })
+        this.window!.webContents.send("START_WHIP", { outputId, url, token, fps: options?.fps || 30, bitrate: options?.bitrate || 2500 })
     }
 
     /** Stop a WHIP stream for a specific output window. */
@@ -290,7 +294,7 @@ ipcRenderer.on("WHIP_POST_ERROR", (_event, { outputId, error }) => {
     }
 });
 
-ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token }) => {
+ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token, fps, bitrate }) => {
     try {
         await stopStream(outputId);
 
@@ -300,7 +304,8 @@ ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token }) => {
         canvas.width = 640;
         canvas.height = 360;
 
-        const mediaStream = canvas.captureStream(30); // 30 fps
+        const targetFps = fps ? Number(fps) : 30;
+        const mediaStream = canvas.captureStream(targetFps);
 
         let realAudioTrack = null;
         let audioCtx = null;
@@ -322,6 +327,23 @@ ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token }) => {
 
         if (realAudioTrack) {
             pc.addTransceiver(realAudioTrack, { direction: "sendonly", streams: [mediaStream] });
+        }
+
+        if (bitrate && Number(bitrate) > 0) {
+            try {
+                const senders = pc.getSenders();
+                const videoSender = senders.find(s => s.track && s.track.kind === "video");
+                if (videoSender) {
+                    const parameters = videoSender.getParameters();
+                    if (!parameters.encodings || parameters.encodings.length === 0) {
+                        parameters.encodings = [{}];
+                    }
+                    parameters.encodings[0].maxBitrate = Number(bitrate) * 1000;
+                    await videoSender.setParameters(parameters);
+                }
+            } catch (bErr) {
+                console.warn("Failed to set video maxBitrate: " + bErr.message);
+            }
         }
 
         streams[outputId] = { canvas, ctx, mediaStream, pc, url, token, resourceUrl: "", audioCtx, audioDest, nextPlayTime: 0 };

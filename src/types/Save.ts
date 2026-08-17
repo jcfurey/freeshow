@@ -9,7 +9,38 @@ import type { StageLayouts } from "./Stage"
 
 export type SaveList = SaveListSettings | SaveListSyncedSettings | "themes" | "events" | "templates" | "overlays" | "driveKeys"
 
-export type SaveListSyncedSettings = "categories" | "drawSettings" | "overlayCategories" | "templateCategories" | "styles" | "profiles" | "timers" | "variables" | "audioStreams" | "audioPlaylists" | "scriptures" | "scriptureSettings" | "groups" | "midiIn" | "emitters" | "playerVideos" | "videoMarkers" | "mediaTags" | "playerTags" | "actionTags" | "variableTags" | "timerTags" | "customizedIcons" | "companion" | "globalTags" | "globalRegexes" | "customMetadata" | "effects" | "deletedDefaults"
+export type SaveListSyncedSettings =
+    | "categories"
+    | "drawSettings"
+    | "overlayCategories"
+    | "templateCategories"
+    | "styles"
+    | "profiles"
+    | "timers"
+    | "variables"
+    | "interactions"
+    | "audioStreams"
+    | "audioPlaylists"
+    | "scriptures"
+    | "scriptureSettings"
+    | "groups"
+    | "midiIn"
+    | "emitters"
+    | "playerVideos"
+    | "videoMarkers"
+    | "mediaTags"
+    | "playerTags"
+    | "actionTags"
+    | "variableTags"
+    | "timerTags"
+    | "customizedIcons"
+    | "companion"
+    | "globalTags"
+    | "globalRegexes"
+    | "customMetadata"
+    | "effects"
+    | "audioRouting"
+    | "deletedDefaults"
 
 export type SaveListSettings =
     | "initialized"
@@ -45,8 +76,6 @@ export type SaveListSettings =
     | "splitLines"
     | "theme"
     | "transitionData"
-    | "volume"
-    | "gain"
     | "audioChannelsData"
     | "cloudSyncData"
     | "driveData"
@@ -89,4 +118,4 @@ export interface SaveData {
     closeWhenFinished: boolean
     customTriggers: SaveActions
 }
-export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; backupShows?: boolean; autosave?: boolean; reset?: boolean }
+export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; autosave?: boolean; reset?: boolean }

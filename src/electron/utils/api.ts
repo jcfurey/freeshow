@@ -1,4 +1,3 @@
-import { ipcMain } from "electron"
 import express from "express"
 import http from "http"
 import OSC from "osc-js"
@@ -39,7 +38,7 @@ function startWebSocket(PORT: number) {
 
 function connected(socket: Socket) {
     log("Client connected.")
-    sendToMain(ToMain.WEBSOCKET, "connected") // TODO: respond with API_DATA
+    sendToMain(ToMain.WEBSOCKET, "connected")
 
     socket.on("data", async (data: string) => {
         let parsedData
@@ -61,18 +60,8 @@ function connected(socket: Socket) {
         safeEmit("data", returnData)
     })
 
-    const apiDataHandler = (_e: any, msg: any) => safeEmit("data", msg)
-
-    ipcMain.on("API_DATA", apiDataHandler)
-
     socket.on("disconnect", () => {
         log("Client disconnected.")
-
-        try {
-            ipcMain.removeListener("API_DATA", apiDataHandler)
-        } catch (err) {
-            // ignore
-        }
     })
 
     function safeEmit(event: string, payload: any) {
@@ -113,7 +102,7 @@ function startRestListener(PORT: number) {
         if (!data.action && req.query.action) data = { action: req.query.action, ...JSON.parse((req.query.data || "{}") as string) }
 
         const returnData = await receivedData(data, (msg: string) => console.info(`REST: ${msg}`))
-        // WIP send error if action does not exist
+        // 204 No Content if action returns empty data or does not exist
         if (!returnData) {
             res.status(204).send()
             return
@@ -168,7 +157,8 @@ export function emitOSC(msg: { signal: any; data: string }) {
     const OSC_SENDER = new OSC({ plugin: new OSC.DatagramPlugin({ send: { host, port } }) })
 
     OSC_SENDER.on("open", sendMessage)
-    OSC_SENDER.open()
+    // set local host/port to 0.0.0.0:0 to allow sending to LAN devices
+    OSC_SENDER.open({ host: "0.0.0.0", port: 0 })
 
     // const IS_OPEN = 1
     // if (OSC_SENDER?.status() === IS_OPEN) {
@@ -240,12 +230,6 @@ export function apiReturnData(data: any) {
 // CLOSE
 
 export function stopApiListener(specificId = "") {
-    try {
-        ipcMain.removeAllListeners("API_DATA")
-    } catch (err) {
-        // ignore
-    }
-
     if (specificId) {
         stop(specificId)
     } else {

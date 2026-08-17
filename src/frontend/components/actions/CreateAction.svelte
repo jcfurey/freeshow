@@ -51,6 +51,7 @@
         "start_audio_stream",
         "start_playlist",
         "start_metronome",
+        "id_start_timer",
         "start_slide_timers",
         "stop_timers",
         "change_output_style",
@@ -102,7 +103,6 @@
                 // remove any Spotify ones if not active
                 if (id.startsWith("spotify_") && !spotifyEnabled) return false
 
-                // WIP MIDI multiple of the same (needs a new way of setting the id)
                 // show if it has an input (because you probably want to have multiple)
                 // if (actionData[actionId]?.input) return true
                 // remove already added or custom ones
@@ -205,7 +205,7 @@
         if (id === "emit_action") return $emitters[actionValue.emitter]?.name || ""
         if (id === "run_action" || id === "toggle_action") return getName($actions)
         if (id === "id_start_effect") return getName($effects)
-        if (id === "start_show") return getName($shows)
+        if (id === "start_show" || id === "id_select_show") return getName($shows)
         if (id === "id_select_project") return getName($projects)
         if (id === "set_template") return getName($templates)
         if (id === "toggle_output") return getName($outputs)
@@ -214,6 +214,7 @@
         if (id === "wait") return Number(actionValue.number) + "s"
         if (id === "id_select_group") return getGlobalGroupName(actionValue.id)
         if (id === "start_camera") return actionValue.label || ""
+        if (id === "start_microphone" || id === "stop_microphone") return actionValue.name || ""
         if (id === "start_screen") return actionValue.name || ""
         if (id === "change_volume") return ((actionValue.volume || 1) * 100).toString()
         if (id.includes("index")) return actionValue.index || "0"

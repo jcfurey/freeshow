@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import type { OutData } from "../../../types/Output"
-import type { ShowRef } from "../../../types/Projects"
+import type { ProjectShowRef, ShowRef } from "../../../types/Projects"
 import type { LayoutRef, OutSlide, Slide } from "../../../types/Show"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
@@ -12,6 +12,7 @@ import { clone } from "./array"
 import { getAllActiveOutputIds, setOutput } from "./output"
 import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, playPdf, updateOut } from "./showActions"
 import { _show } from "./shows"
+import { runActionId } from "../actions/actions"
 
 type Options = { isSpace: boolean; slideLayers: boolean; playNext: boolean }
 
@@ -142,8 +143,11 @@ export class OutputHelper {
         })
 
         if (get(focusMode)) {
-            // skip sections & skip overlays when going back
-            while (projectItems[newIndex]?.type === "section" || (next ? false : projectItems[newIndex]?.type === "overlay")) newIndex += next ? 1 : -1
+            // skip all sections & skip overlays when going back
+            while (projectItems[newIndex]?.type === "section" || (next ? false : projectItems[newIndex]?.type === "overlay")) {
+                this.runSectionAction(projectItems[newIndex])
+                newIndex += next ? 1 : -1
+            }
             const newItem = projectItems[newIndex]
             if (!newItem) return
 
@@ -159,11 +163,19 @@ export class OutputHelper {
             return
         }
 
+        // skip empty sections
+        while (projectItems[newIndex]?.type === "section" && !projectItems[newIndex]?.notes) {
+            this.runSectionAction(projectItems[newIndex])
+            newIndex += next ? 1 : -1
+        }
+
+        const newItem = projectItems[newIndex]
+        this.runSectionAction(newItem)
+
         openProjectItem(get(activeProject) || "", newIndex)
 
         // play directly from "Next slide timer" & "nextAfterMedia"
         if (options.playNext) {
-            const newItem = projectItems[newIndex]
             if ((newItem?.type || "show") === "show") {
                 // allow show to load first
                 setTimeout(() => {
@@ -176,8 +188,19 @@ export class OutputHelper {
         }
     }
 
+    private static runSectionAction(item: ProjectShowRef | undefined) {
+        if (item?.type !== "section") return
+
+        const itemSettings = item.data?.settings
+        const actionId = itemSettings?.triggerAction || get(special).sectionTriggerAction
+        if (actionId) runActionId(actionId, "section")
+    }
+
     private static getProjectItemIndex(item: OutSlide | ShowRef | null = null) {
         if (!item) return -1
+
+        const projectIndex = (item as OutSlide)?.projectIndex ?? (item as ShowRef)?.index
+        if (typeof projectIndex === "number" && projectIndex >= 0) return projectIndex
 
         const projectItems = this.getProjectItems()
         const activeShow = this.getActiveItem()
@@ -203,7 +226,7 @@ export class OutputHelper {
         const projectItems = this.getProjectItems()
         const activeItem = this.getActiveItem()
         const currentShow = get(showsCache)[activeItem?.id || ""]
-        const activeOutShow: OutSlide | null = currentShow && !options.playNext ? { id: activeItem?.id || "", layout: projectItems[activeItem?.index ?? -1]?.layout || currentShow?.settings?.activeLayout } : null
+        const activeOutShow: OutSlide | null = currentShow && !options.playNext ? { id: activeItem?.id || "", layout: projectItems[activeItem?.index ?? -1]?.layout || currentShow?.settings?.activeLayout, projectIndex: activeItem?.index } : null
 
         const outSlide = this.getOut(outputId).slide || null
 

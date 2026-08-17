@@ -26,6 +26,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     history: { label: "popup.history", icon: "history", iconColor: "var(--secondary)", shortcuts: ["Ctrl+H"] },
     cut: { label: "actions.cut", icon: "cut", iconColor: "#97c7ff", shortcuts: ["Ctrl+X"] },
     copy: { label: "actions.copy", icon: "copy", iconColor: "#97c7ff", shortcuts: ["Ctrl+C"] },
+    copy_id: { label: "actions.copy_id", icon: "copy", iconColor: "#97c7ff" },
     paste: { label: "actions.paste", icon: "paste", iconColor: "#97c7ff", shortcuts: ["Ctrl+V"] },
     docs: { label: "main.docs", icon: "document", external: true },
     quick_search: { label: "main.quick_search", icon: "search", shortcuts: ["Ctrl+G"] },
@@ -44,6 +45,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     delete: { label: "actions.delete", icon: "delete", iconColor: "#ff5454", shortcuts: ["Del"] },
     delete_remove: { label: "actions.remove", icon: "delete", iconColor: "#ff6b54", shortcuts: ["Del"] },
     delete_all: { label: "actions.delete_all", icon: "delete", iconColor: "#ff5454" },
+    delete_row: { label: "actions.delete_row", icon: "delete", iconColor: "#ff5454" },
+    delete_col: { label: "actions.delete_col", icon: "delete", iconColor: "#ff5454" },
     import: { label: "actions.import", icon: "import" },
     export: { label: "actions.export", icon: "export" },
     custom_text: { label: "popup.custom_text", icon: "rename", iconColor: "#6effbe" },
@@ -108,6 +111,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     sort_shows_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_shows"] },
     sort_projects_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_projects"] },
     sort_media_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_media"] },
+    media_view: { label: "titlebar.view", icon: "media", items: ["LOAD_media_view"] },
     // SHOWS
     lock_group: { label: "context.lockForChanges", icon: "lock", iconColor: "#ff5454" },
     remove: { label: "actions.remove", icon: "delete", iconColor: "#ff6b54" },
@@ -158,6 +162,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     stage: { label: "menu.stage", id: "stage" },
     // formatting
     find_replace: { label: "actions.find_replace", icon: "find_replace", iconColor: "#90f1cc" },
+    insert_virtual_break: { label: "edit.insert_virtual_break", icon: "add", iconColor: "#90f1cc" },
     cut_in_half: { label: "actions.cut_in_half", tooltip: "tooltip.context_cut_in_half [Alt+Enter]", icon: "cut_in_half", iconColor: "#90f1b5" },
     merge: { label: "actions.merge", tooltip: "tooltip.context_merge", icon: "merge", iconColor: "#90f1b5" },
     uppercase: { label: "actions.uppercase", icon: "increase_text", iconColor: "#93f190" },
@@ -282,7 +287,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     slide_recorder_item: ["remove"],
     // , "addToShow"
     // show_in_explorer!!
-    media: ["manage_media_tags", "media_tag_filter", "sort_media_by"],
+    media: ["manage_media_tags", "media_tag_filter", "sort_media_by", "media_view"],
     media_card: ["GROUP_open", "createSlideshow", "play_no_audio", "play_no_filters", "SEPARATOR", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
     // "addToFirstSlide",
     drawer_overlays: ["reset_defaults"],
@@ -294,8 +299,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     template_card: ["GROUP_edit", "template_actions", "export", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
     template_card_default: ["GROUP_edit", "duplicate", "delete"],
     template_card_readonly: [],
-    effect_card: ["GROUP_edit", "display_duration", "SEPARATOR", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
-    effect_card_default: ["GROUP_edit", "duplicate", "delete"],
+    effect_card: ["GROUP_open", "display_duration", "SEPARATOR", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
+    effect_card_default: ["GROUP_open", "duplicate", "delete"],
     player: ["manage_player_tags", "player_tag_filter"],
     player_button: ["GROUP_open", "player_tag_set", "player_tag_filter", "SEPARATOR", "rename", "delete"],
     audio_button: ["GROUP_open", "effects_library_add", "favourite", "SEPARATOR", "system_open"],
@@ -311,6 +316,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     action_readonly: ["action_tag_filter"],
     scripture_verse: ["create_show", "SEPARATOR", "selectAll", "SEPARATOR", "route_bible"],
     scripture_chapter: ["create_show"],
+    interaction: ["GROUP_edit", "rename", "delete"],
+    interaction_input: ["GROUP_edit", "duplicate", "delete"],
 
     // PROJECT
     projects: ["newProject", "newFolder", "SEPARATOR", "sort_projects_by"],
@@ -381,14 +388,15 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["GROUP_rename_only", "move_connections", "disable", "SEPARATOR", "export", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     stage_slide_readonly: ["move_connections"],
     stage_item: ["GROUP_conditions", "rearrange_stage", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
-    stage_item_output: ["rearrange_stage", "SEPARATOR", "delete"],
+    stage_item_output: ["GROUP_conditions", "rearrange_stage", "SEPARATOR", "delete"],
     stage_text_item: ["GROUP_dynamic", "rearrange_stage", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 
     // EDIT
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
-    editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all"],
+    editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all", "SEPARATOR", "insert_virtual_break"],
     items_list_item: ["to_front", "forward", "backward", "to_back"],
+    table_context: ["delete_row", "delete_col"],
 
     // TIMELINE
     timeline_node: ["delete"],
@@ -402,5 +410,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     profile_tab: ["GROUP_rename_recolor", "duplicate", "delete", "SEPARATOR", "reset"], // "GROUP_rename_color"
     profile_tab_admin: [],
     output_screen: ["GROUP_rename_recolor", "duplicate", "delete"], // , "SEPARATOR", "reset" // "GROUP_rename_color"
-    output_screen_stage: ["GROUP_rename_recolor", "duplicate", "delete"] // , "SEPARATOR", "reset" // "GROUP_rename_color"
+    output_screen_stage: ["GROUP_rename_recolor", "duplicate", "delete"], // , "SEPARATOR", "reset" // "GROUP_rename_color"
+    audio_channel: ["GROUP_rename_recolor", "delete"],
+    audio_channel_main: ["GROUP_rename_only"]
 }

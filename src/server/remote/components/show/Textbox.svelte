@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import autosize, { type AutosizeTypes } from "../../../common/util/autosize"
+    import autosize, { AutosizeTypes } from "../../../common/util/autosize"
     import { createVirtualBreaks } from "../../../common/util/show"
     import { getStyles } from "../../../common/util/style"
     import { mediaCache } from "../../util/stores"
@@ -125,7 +125,7 @@
     -webkit-line-break: after-white-space; */
 
         text-wrap: balance; /* balanced breaking, looks much cleaner */
-        white-space: pre; /* preserve special spaces from Text edit */
+        white-space: pre-wrap; /* preserve special spaces from Text edit */
     }
 
     .break span {

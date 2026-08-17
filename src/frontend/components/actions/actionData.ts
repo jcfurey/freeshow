@@ -9,7 +9,8 @@ export const actionData = {
     mark_active_as_played: { name: "actions.mark_played", icon: "check", input: "toggle" },
 
     // SHOWS
-    name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },
+    id_select_show: { SECTION: "guide_title.show", name: "actions.id_select_show", icon: "showIcon", input: "start_show" },
+    name_select_show: { name: "actions.name_select_show", icon: "showIcon", input: "strval" },
     start_show: { slideId: "startShow", common: true, name: "preview._start", icon: "showIcon", input: "start_show" }, // any play actions are incompatible with clear actions...
     set_template: { name: "actions.set_template_active", icon: "templates", input: "id" },
     set_next_slide_timer: { name: "preview.nextTimer", icon: "timer", input: "numval" },
@@ -47,8 +48,10 @@ export const actionData = {
     id_select_overlay: { common: true, canAddMultiple: true, name: "actions.id_select_overlay", icon: "overlays", input: "id" },
 
     // OUTPUT
-    start_webrtc_stream: { SECTION: "guide_title.output", name: "output.start_streaming", icon: "record", input: "id" },
-    stop_webrtc_stream: { name: "output.stop_streaming", icon: "stop", input: "id", red: true },
+    start_webrtc_stream: { SECTION: "guide_title.output", name: "output.start_streaming (WebRTC)", icon: "record", input: "id" },
+    stop_webrtc_stream: { name: "output.stop_streaming (WebRTC)", icon: "stop", input: "id", red: true },
+    start_rtmp_stream: { name: "output.start_streaming (RTMP)", icon: "record", input: "id" },
+    stop_rtmp_stream: { name: "output.stop_streaming (RTMP)", icon: "stop", input: "id", red: true },
     lock_output: { canAddMultiple: true, name: "actions.toggle_output_lock", icon: "locked", input: "output_lock" },
     toggle_output_windows: { name: "actions.toggle_output_windows", icon: "outputs", input: "toggle", incompatible: ["toggle_output"] },
     toggle_output: { canAddMultiple: true, name: "actions.toggle_output_window", icon: "outputs", input: "toggle_output", incompatible: ["toggle_output_windows"] },
@@ -70,6 +73,8 @@ export const actionData = {
     playlist_next: { name: "actions.playlist_next", icon: "playlist", incompatible: ["start_playlist"] },
     start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
     start_audio_effect: { common: true, canAddMultiple: true, name: "actions.start_audio_effect", icon: "effect", input: "audio_effects" },
+    start_microphone: { common: true, name: "actions.start_microphone", icon: "mic", input: "microphone" },
+    stop_microphone: { common: true, name: "actions.stop_microphone", icon: "mic", input: "microphone", red: true },
 
     // TIMERS
     id_start_timer: { SECTION: "tabs.timers", common: true, canAddMultiple: true, name: "actions.id_start_timer", icon: "timer", input: "id", incompatible: ["pause_timers", "stop_timers"] },
@@ -95,6 +100,12 @@ export const actionData = {
     // send_midi: { SECTION: "actions.emit_data", canAddMultiple: true, slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
     // send_rest_command: { canAddMultiple: true, name: "actions.send_rest_command", icon: "trigger", input: "rest" },
     emit_action: { SECTION: "actions.emit_data", common: true, canAddMultiple: true, name: "actions.emit_data", icon: "emitter", input: "emitter" },
+
+    // Interactions
+    interaction_start: { SECTION: "tabs.interactions", name: "tabs.interactions: inputs.start", icon: "game", input: "interactions" },
+    interaction_stop: { name: "tabs.interactions: media.stop", icon: "game", input: "interactions" },
+    interaction_next: { canAddMultiple: true, name: "tabs.interactions: media.next", icon: "game", input: "interactions" },
+    interaction_previous: { canAddMultiple: true, name: "tabs.interactions: media.previous", icon: "game", input: "interactions" },
 
     // OBS Studio
     obs_set_scene: { SECTION: "OBS Studio", name: "OBS Studio: Set scene", icon: "screen", input: "obs_scene" },

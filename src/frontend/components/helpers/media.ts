@@ -247,6 +247,8 @@ export async function getMediaCached(path: string, size: number = mediaSize.draw
 }
 
 export async function locateMediaFile(path: string) {
+    if (path.startsWith("http") || path.startsWith("data:") || path.startsWith("blob:") || path.startsWith("freeshow-protected://")) return { path, hasChanged: false }
+
     let folders: string[] = []
     if (get(special).autoLocateMedia !== false) {
         const mediaType = getMediaType(getExtension(path))
@@ -372,6 +374,7 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
         filter: "",
         flipped: false,
         flippedY: false,
+        blend: "",
         fit: currentStyle?.fit || "contain",
         fitOptions,
         volume: currentStyle?.volume ?? 100,
@@ -380,7 +383,8 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
         toTime: 0,
         softLoop: 0,
         videoType: "",
-        cropping: {}
+        cropping: {},
+        style: ""
     }
 
     if (!mediaObj && !currentStyle) return mediaStyle
@@ -525,7 +529,7 @@ export function getVideoDuration(path: string): Promise<number> {
         }
 
         const video = document.createElement("video")
-        video.src = path
+        video.src = encodeFilePath(path)
         video.preload = "metadata"
 
         let loaded = false
@@ -779,14 +783,14 @@ export async function downloadOnlineMedia(url: string) {
     const needsLicense = !!(providerId && mediaId)
 
     if (downloadedPath?.protectedUrl) {
-        if (!needsLicense || isLicenseValid(mediaData)) return downloadedPath.protectedUrl
+        if (!needsLicense || isLicenseValid(mediaData) || !navigator.onLine) return downloadedPath.protectedUrl
         const refreshed = await refreshMediaLicense(url, providerId, mediaId)
         if (refreshed) return downloadedPath.protectedUrl
         return url
     }
     if (downloadedPath?.path) return downloadedPath.path
 
-    if (needsLicense && !isLicenseValid(mediaData)) await refreshMediaLicense(url, providerId, mediaId)
+    if (needsLicense && !isLicenseValid(mediaData) && navigator.onLine) await refreshMediaLicense(url, providerId, mediaId)
 
     const updatedMediaData = get(media)[url]
     sendMain(Main.MEDIA_DOWNLOAD, { url, contentFile: updatedMediaData?.contentFile })

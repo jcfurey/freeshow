@@ -4,7 +4,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
-    import { changeTeam, setupCloudSync, socketDisconnect } from "../../../utils/cloudSync"
+    import { changeTeam, setupCloudSync, socketDisconnect, updateCloudDeviceName } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
@@ -74,6 +74,7 @@
 
         // get default path again if reset
         if (!mediaFolderPath) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
+        else sendMain(Main.BUNDLE_MEDIA_FILES, { outputPath: mediaFolderPath })
     }
 
     // get times
@@ -183,6 +184,8 @@
             a[key] = value
             return a
         })
+
+        if (key === "deviceName") updateCloudDeviceName()
     }
 
     let disconnecting = false
@@ -257,8 +260,8 @@
             // alertMessage.set("media.media_sync_folder_tip")
             // activePopup.set("alert")
 
-            sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
-            mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
+            if (!mediaFolderPath) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
+            sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true, outputPath: mediaFolderPath })
         }
     }
 </script>

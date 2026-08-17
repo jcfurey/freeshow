@@ -15,14 +15,17 @@ import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { sendMain, sendToMain } from "../IPC/main"
-import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDefaultDataFolderRoot, isWritable, moveFileAsync, readFile, readFolder } from "../utils/files"
+import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDefaultDataFolderRoot, isWritable, moveFileAsync, readFile, readFolder, specialCaseFixer } from "../utils/files"
 import { clone, wait } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
 
 // NOTE: defaults will always replace the keys with any in the default when they are removed
 
-export const config = new Store<Config>({ defaults: defaultConfig })
+// throwaway test path for Playwright tests
+const mockStorePath = process.env.FS_MOCK_STORE_PATH
+
+export const config = new Store<Config>({ defaults: defaultConfig, cwd: mockStorePath })
 
 export const storeFilesData = {
     SHOWS: { fileName: "shows", portable: false, defaults: {} as TrimmedShows, minify: true }, // cache
@@ -57,6 +60,8 @@ export async function setupStores() {
     createStores(oldLocation, true)
 
     checkStores(getDataFolderPath("userData"))
+
+    specialCaseFixer()
 }
 
 // Check that files are parsed properly!
@@ -112,7 +117,7 @@ export function createStores(previousLocation?: string | null, setup = false) {
         const createStoreConfig = (useCwd: boolean) => ({
             name: data.fileName,
             defaults: data.defaults,
-            cwd: useCwd && data.portable ? configFolderPath : undefined,
+            cwd: mockStorePath ?? (useCwd && data.portable ? configFolderPath : undefined),
             serialize: (data as any).minify ? (v: any) => JSON.stringify(v) : undefined,
             accessPropertiesByDotNotation: key === "MEDIA" ? false : true
         })

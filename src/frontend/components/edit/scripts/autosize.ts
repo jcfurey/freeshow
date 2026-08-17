@@ -108,7 +108,12 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
             const htmlTextElem = textElem as HTMLElement
             if (!styles[i]) styles[i] = htmlTextElem.getAttribute("style") || ""
             const autosizeRatio = Number(htmlTextElem.dataset.autosizeRatio || "") || 1
-            htmlTextElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize * autosizeRatio}px !important;`)
+            if (styles[i].includes("var(--base-font-size)")) {
+                const newStyle = styles[i].replace(/--base-font-size:\s*[^;]+;?/gi, `--base-font-size: ${currentFontSize * autosizeRatio}px;`)
+                htmlTextElem.setAttribute("style", newStyle + ";overflow:visible;")
+            } else {
+                htmlTextElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize * autosizeRatio}px !important;`)
+            }
             i++
         }
     }
@@ -130,9 +135,10 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.height = `${newHeight}px`
         cloned.style.padding = "0"
 
-        // "align-items: flex-end;" does not work with auto size
-        cloned.style.alignItems = "center"
-        if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "center"
+        // scrollHeight only measures overflow below the box: with flex-end (and half of it with center) overflow is invisible to it,
+        // so measure with flex-start - vertical alignment does not affect the content size, the computed fit is the same
+        cloned.style.alignItems = "flex-start"
+        if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "flex-start"
 
         for (const elemHide of Array.from(cloned.querySelectorAll(".hideFromAutosize"))) {
             ;(elemHide as HTMLElement).style.display = "none"

@@ -78,13 +78,21 @@
     let precomputePending = new Set<string>()
 
     const showItemRef = { outputId, slideIndex: outSlide?.index }
-    // $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
-    // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
     let conditionsUpdater = 0
-    const updaterInterval = setInterval(() => {
-        if (isClearing) return
-        if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
-    }, 300)
+    let isMic = false
+    $: isMic = JSON.stringify(currentItems.map((a) => a?.conditions) || "").includes('"element":"volume"')
+
+    let updaterInterval: NodeJS.Timeout
+    $: {
+        clearInterval(updaterInterval)
+        updaterInterval = setInterval(
+            () => {
+                if (isClearing || !Array.isArray(currentItems)) return
+                if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
+            },
+            isMic ? 100 : 300
+        )
+    }
     onDestroy(() => clearInterval(updaterInterval))
 
     // do not update if only line has changed
@@ -107,6 +115,16 @@
     let currentSlideItems: Item[] | null = null
     $: if (currentSlide?.items !== 0) {
         if (JSON.stringify(currentSlide?.items) !== JSON.stringify(currentSlideItems)) currentSlideItems = clone(currentSlide?.items || null)
+    }
+    $: if (current && outSlide) {
+        if (current.outSlide) {
+            current.outSlide.itemClickReveal = outSlide.itemClickReveal
+            current.outSlide.revealCount = outSlide.revealCount
+            current.outSlide.line = outSlide.line
+        }
+    }
+    $: if (current && lines) {
+        current.lines = clone(lines)
     }
 
     $: if (currentSlideItems !== undefined || currentOutSlide || currentLines) updateItems()
@@ -246,7 +264,8 @@
         persistentItems = newPersistentItems
 
         // between
-        if (currentItems.length && currentSlide.items.length) transitioningBetween = true
+        const isDifferentSlide = current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
+        if (isDifferentSlide && currentItems.length && currentSlide.items.length) transitioningBetween = true
 
         if (timeout) clearTimeout(timeout)
 
@@ -401,7 +420,6 @@
             <!-- Persistent item: unchanged content, render outside transition to avoid flicker -->
             <Textbox
                 backdropFilter={current.slideData?.["backdrop-filter"] || ""}
-                disableListTransition={mirror}
                 chords={item.chords?.enabled}
                 animationStyle={animationData.style || {}}
                 item={timelineItems.get(`${current.outSlide?.id}-${current.outSlide?.layout}-${current.outSlide?.index}`)?.[index] || item}
@@ -427,7 +445,6 @@
                     <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
                         <Textbox
                             backdropFilter={current.slideData?.["backdrop-filter"] || ""}
-                            disableListTransition={mirror}
                             chords={customItem.chords?.enabled}
                             animationStyle={animationData.style || {}}
                             item={timelineItems.get(`${customOut?.id}-${customOut?.layout}-${customOut?.index}`)?.[index] || customItem}

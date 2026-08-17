@@ -1,16 +1,17 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { getContext, onDestroy } from "svelte"
     import type { StageLayout } from "../../../types/Stage"
     import Center from "../../common/components/Center.svelte"
     import Icon from "../../common/components/Icon.svelte"
     import autosize from "../../common/util/autosize"
     import { keysToID, sortByName } from "../../common/util/helpers"
     import { getStyles } from "../../common/util/style"
+    import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
+    import { getItemText } from "../helpers/textStyle"
     import Clock from "../items/Clock.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
-    import VideoTime from "../items/VideoTime.svelte"
     import { _getDynamicValue } from "../util/itemHelpers"
     import { activeTimers, background, media, output, outputSlideCache, progressData, stream, timers, variables } from "../util/stores"
     import MediaOutput from "./MediaOutput.svelte"
@@ -25,6 +26,16 @@
 
     $: currentOutput = $output
     $: currentSlide = currentOutput?.out?.slide || (slideOffset !== 0 ? $outputSlideCache[currentOutput?.id || ""] || null : null)
+
+    // pick the pushed frame for this layout's output, falling back deterministically
+    function getStreamCapture(streamMap: any, outputId: string | undefined) {
+        if (outputId && streamMap[outputId]) return streamMap[outputId]
+
+        const outputKeys = Object.keys(streamMap).sort()
+        if (outputKeys.length) return streamMap[outputKeys[0]]
+
+        return null
+    }
 
     $: currentBackground = $background
 
@@ -52,12 +63,11 @@
     }
 
     // custom dynamic size
-    // WIP this does not update when window size changes...
     let newSizes = `;
-        top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
-        left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
-        width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
-        height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
+        top: ${(itemStyles.top / 1080) * resolution.height}px;
+        left: ${(itemStyles.left / 1920) * resolution.width}px;
+        width: ${(itemStyles.width / 1920) * resolution.width}px;
+        height: ${(itemStyles.height / 1080) * resolution.height}px;
     `
 
     let alignElem: HTMLElement | undefined
@@ -68,20 +78,6 @@
     $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
 
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
-
-    // request video time
-    let videoTime: number = 0
-    // $: if (id.includes("video")) requestVideoData()
-    // let interval: any = null
-    // function requestVideoData() {
-    //     if (interval) return
-    //     // USE API ?!?
-    //     interval = setInterval(() => send("REQUEST_VIDEO_DATA"), 1000)
-    //     // interval = setInterval(() => socket.emit("STAGE", { id: socketId, channel: "REQUEST_VIDEO_DATA" }), 1000)
-    // }
-    // onDestroy(() => {
-    //     if (interval) clearInterval(interval)
-    // })
 
     let firstTimerId: string = ""
     $: if (item.type === "timer" || id.includes("first_active_timer")) {
@@ -134,11 +130,49 @@
     const cssInterval = setInterval(() => updateTrigger++, 1000)
 
     $: cssVariables = createCSSVariables($variables, updateTrigger)
+
+    // flash background (on mount & text changes)
+    $: currentItemText = item ? getItemText(item) : ""
+
+    $: flashColor = item?.flash?.color || "#FF0000"
+    $: flashCount = (() => {
+        let value = Number(item?.flash?.count)
+        return !value || !Number.isFinite(value) || value < 1 ? 3 : Math.floor(value)
+    })()
+
+    const getLayoutMounted = getContext<() => boolean>("layoutMounted")
+
+    let evaluatedText = ""
+    $: {
+        if (currentItemText) {
+            replaceDynamicValues(currentItemText, ($variables ? 0 : 0) + ($timers ? 0 : 0) + updateTrigger)
+            evaluatedText = getDynamicValue(currentItemText)
+        } else {
+            evaluatedText = ""
+        }
+    }
+
+    let lastText = ""
+    let flashTriggerId = 0
+    $: if (item?.flash?.enabled) {
+        const currentText = evaluatedText || ""
+        const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
+
+        if (lastText !== currentText && currentText.trim() && !parentIsMounting) flashTriggerId++
+        lastText = currentText
+    }
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
 <!-- {show.settings.autoStretch === false ? '' : newSizes} -->
 <div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}">
+    <!-- flash background -->
+    {#if item?.flash?.enabled && flashTriggerId > 0}
+        {#key flashTriggerId}
+            <div class="flashBackground" style="background-color: {flashColor};animation-iteration-count: {flashCount};"></div>
+        {/key}
+    {/if}
+
     {#if stageLayout?.settings.labels}
         <div class="label">{item.label || ""}</div>
     {/if}
@@ -147,7 +181,7 @@
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 <!-- width gets squished when resized -->
-                <PreviewCanvas alpha={id.includes("_alpha")} id={stageLayout?.settings?.output} capture={$stream[id.includes("_alpha") ? "alpha" : "default"]} />
+                <PreviewCanvas outputId={stageLayout?.settings?.output} capture={getStreamCapture($stream, stageLayout?.settings?.output)} />
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
 
@@ -158,13 +192,13 @@
                 {#if currentSlide}
                     {#key item || currentSlide}
                         <!-- autoStage={show.settings.autoStretch !== false} -->
-                        <SlideText {currentSlide} {slideOffset} stageItem={item} show={stageLayout} {resolution} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={item.auto !== false} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
+                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={item.textFit !== "none" && item.auto !== false} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
                     {/key}
                 {/if}
             {:else if item.type === "slide_notes" || id.includes("notes")}
                 <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />
             {:else if item.type === "text"}
-                <Textbox {item} showId={id} autoSize={item.auto === true} {fontSize} />
+                <Textbox {item} showId={id} autoSize={item.auto === true || (item.textFit && item.textFit !== "none")} {fontSize} />
                 <!-- STAGE VV -->
             {:else if item.type === "slide_tracker" || id.includes("slide_tracker")}
                 <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -185,9 +219,7 @@
             {:else}
                 <!-- OLD CODE -->
                 <div>
-                    {#if id.includes("video")}
-                        <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
-                    {:else if id.includes("first_active_timer")}
+                    {#if id.includes("first_active_timer")}
                         <Timer {item} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {:else if id.includes("timers")}
                         {#if $timers[id.split("#")[1]]}
@@ -284,5 +316,27 @@
         .label {
             font-size: 18px;
         }
+    }
+    @keyframes stage-flash {
+        0% {
+            opacity: 0;
+        }
+        15% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+    .flashBackground {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+        animation-name: stage-flash;
+        animation-duration: 600ms;
+        animation-timing-function: ease-out;
+        animation-fill-mode: forwards;
     }
 </style>

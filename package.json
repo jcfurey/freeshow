@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "1.6.2-beta.2",
+    "version": "1.6.5-beta.3",
     "private": true,
     "main": "build/electron/index.js",
     "description": "Show song lyrics and more for free!",
@@ -11,10 +11,13 @@
         "node": ">=22.12.0"
     },
     "overrides": {
-        "tmp": "^0.2.7"
+        "shell-quote": "^1.8.4",
+        "tmp": "^0.2.7",
+        "tar": "^7.5.20"
     },
     "scripts": {
         "postinstall": "electron-builder install-app-deps",
+        "rebuild-opus": "electron-rebuild -f -w @discordjs/opus",
         "---DEVELOPMENT---": "",
         "start": "node scripts/start.js",
         "start:old": "npx cross-env NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
@@ -92,7 +95,8 @@
         "eslint-config-prettier": "^8.10.2",
         "eslint-plugin-jsdoc": "^39.9.1",
         "eslint-plugin-prefer-arrow": "^1.2.3",
-        "npm-run-all2": "^9.0.2",
+        "firebase": "^12.15.0",
+        "npm-run-all2": "^9.0.1",
         "pdfjs-dist": "^5.4.296",
         "playwright": "^1.56.1",
         "prettier": "^3.6.2",
@@ -141,8 +145,8 @@
         "music-metadata": "^7.14.0",
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
-        "pcm-convert": "^1.6.5",
         "protobufjs": "^7.5.3",
+        "pusher-js": "^8.5.0",
         "slideshow": "github:vassbo/slideshow#224d50f",
         "socket.io": "^4.8.1",
         "uid": "^2.0.2",

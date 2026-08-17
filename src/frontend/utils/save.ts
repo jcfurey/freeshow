@@ -3,6 +3,7 @@ import { Main } from "../../types/IPC/Main"
 import type { Projects } from "../../types/Projects"
 import type { Shows } from "../../types/Show"
 import { customActionActivation } from "../components/actions/actions"
+import { stopAllInteractions } from "../components/drawer/pages/interactions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { isOutCleared } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
@@ -17,6 +18,7 @@ import {
     audioEffects,
     audioFolders,
     audioPlaylists,
+    audioRouting,
     autoOutput,
     autosave,
     calendarAddShow,
@@ -43,11 +45,11 @@ import {
     folders,
     formatNewShow,
     fullColors,
-    gain,
     globalRegexes,
     globalTags,
     groupNumbers,
     groups,
+    interactions,
     labelsDisabled,
     language,
     lockedOverlays,
@@ -104,14 +106,14 @@ import {
     usageLog,
     variableTags,
     variables,
-    videoMarkers,
-    volume
+    videoMarkers
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
 import { socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
+import { autoDisableRemoteController, stopRemoteController } from "./remoteController"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     startAutosave() // reset auto save timer
@@ -129,6 +131,22 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         alertMessage.set("actions.closing")
         activePopup.set("alert")
     }
+
+    // reset auto backup timer
+    if (customTriggers.backup) {
+        special.update((s) => {
+            // subtract one hour from time to keep it relatively the same with each backup
+            s.autoBackupPrevious = Date.now() - 3600000
+            return s
+        })
+    }
+
+    // strip runtime state that should not save
+    const sanitizedOutputs = clone(get(outputs))
+    Object.values(sanitizedOutputs).forEach((out: any) => {
+        if (out.webrtcData) out.webrtcData.streaming = false
+        if (out.rtmpData) out.rtmpData.streaming = false
+    })
 
     const settings: { [key in SaveListSettings]: any } = {
         initialized: true,
@@ -157,7 +175,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         mediaOptions: get(mediaOptions),
         openedFolders: get(openedFolders),
         outLocked: get(outLocked),
-        outputs: get(outputs),
+        outputs: sanitizedOutputs,
         sorted: get(sorted),
         remotePassword: get(remotePassword),
         resized: get(resized),
@@ -167,8 +185,6 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         theme: get(theme),
         transitionData: get(transitionData),
         // themes: get(themes),
-        volume: get(volume),
-        gain: get(gain),
         audioChannelsData: get(audioChannelsData),
         cloudSyncData: get(cloudSyncData),
         driveData: get(driveData),
@@ -241,6 +257,7 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         profiles,
         timers,
         variables,
+        interactions,
         audioStreams,
         audioPlaylists,
         midiIn: actions,
@@ -258,6 +275,7 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         globalRegexes,
         customMetadata,
         effects,
+        audioRouting,
         deletedDefaults
     }
 }
@@ -314,7 +332,19 @@ export function initializeClosing(skipPopup = false) {
     else save(true)
 }
 
-export function closeApp() {
+export async function closeApp() {
+    try {
+        const timeout = <T>(promise: Promise<T>, ms: number): Promise<T | void> => {
+            return Promise.race([promise, new Promise<void>((resolve) => setTimeout(resolve, ms))])
+        }
+
+        await timeout(stopAllInteractions(), 500)
+        await timeout(stopRemoteController(), 500)
+        autoDisableRemoteController()
+    } catch (e) {
+        console.error("Could not stop interactions before closing!", e)
+    }
+
     sendMain(Main.CLOSE)
 }
 
@@ -441,13 +471,12 @@ const saveList: { [key in SaveList]: any } = {
     templates,
     timers,
     variables,
+    interactions,
     audioStreams,
     audioPlaylists,
     theme,
     themes,
     transitionData,
-    volume: null,
-    gain: null,
     audioChannelsData,
     midiIn: actions,
     emitters,
@@ -476,5 +505,6 @@ const saveList: { [key in SaveList]: any } = {
     contentProviderData,
     obsData: null,
     effects,
+    audioRouting,
     deletedDefaults: null
 }

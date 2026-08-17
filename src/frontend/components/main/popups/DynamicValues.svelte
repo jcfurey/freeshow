@@ -39,19 +39,20 @@
         // _color is only for CSS "var(--slide-group-color)", but we should show them in a seperate way
 
         const isStage = $activePage === "stage"
-        const hidden = ["slide_text_current", "slide_group_color", "slide_group_next_color", "slide_group_upcoming_color"]
-        const nonStageHidden = ["show_text_full"]
-        const stageHidden = ["slide_text_previous", "slide_text_next"]
-        if (isStage) list = list.filter((a) => !hidden.includes(a.id) && !stageHidden.includes(a.id))
-        else list = list.filter((a) => !hidden.includes(a.id) && !nonStageHidden.includes(a.id))
+        const hidden = ["slide_text", "slide_group_color", "slide_group_upcoming_color"]
+        let nonStageHidden = ["show_text_full", "slide_group_text"]
+        if ($showsCache[$activeShow?.id || ""]?.reference?.type !== "interaction") nonStageHidden.push("interaction_")
+        const stageHidden = ["interaction_"]
+        if (isStage) list = list.filter((a) => !hidden.includes(a.id) && !stageHidden.some((h) => a.id.startsWith(h)))
+        else list = list.filter((a) => !hidden.includes(a.id) && !nonStageHidden.some((h) => a.id.startsWith(h)))
 
         let separatorId = ""
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
-        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "exif_", "video_", "audio_", "scripture_"]
+        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text", "exif_", "video_", "audio_", "scripture_", "interaction_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
-            const separator = separators.find((a) => value.id.includes(a)) || ""
+            const separator = separators.find((a) => value.id.startsWith(a)) || ""
             if (separator && separatorId !== separator && separatorId !== "$" && !newList[separator]?.length) {
                 separatorId = separator
                 newList[separatorId] = []
@@ -66,11 +67,12 @@
     }
 
     function getTitle(id: string) {
+        if (id === "interaction_") return "tabs.interactions"
         if (id === "scripture_") return "tabs.scripture"
         if (id === "time_") return "timer.time"
         if (id === "project_") return "guide_title.project"
         if (id === "show_") return "guide_title.show"
-        if (id === "slide_text_") return "edit.text"
+        if (id === "slide_text") return "edit.text"
         if (id === "exif_") return "items.image (EXIF)"
         if (id === "video_") return "edit.video"
         if (id === "audio_") return "tools.audio"
@@ -254,15 +256,12 @@
                                 {#if preview}{@html preview}{:else}—{/if}
                             </p>
 
-                            <p style="display: inline-flex;">
+                            <p style="display: inline-flex;" data-title={value.id}>
                                 <span style="color: var(--secondary);">{"{"}</span>
                                 {#if value.id.startsWith("$")}
                                     <span style="color: var(--secondary);">{"$"}</span>
                                     {value.id.slice(1)}
                                 {:else}
-                                    <!-- variable_set_ -->
-                                    <!-- <span style="color: var(--secondary);">{value.id.slice(0, value.id.indexOf("_") + 1)}</span> -->
-                                    <!-- {value.id.slice(value.id.indexOf("_") + 1)} -->
                                     {value.id}
                                 {/if}
                                 <span style="color: var(--secondary);">{"}"}</span>
@@ -310,7 +309,7 @@
         background-color: var(--primary-darkest);
         padding: 10px;
 
-        max-width: 600px;
+        max-width: 500px;
     }
 
     .value.active {

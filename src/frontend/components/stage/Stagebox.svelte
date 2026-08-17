@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { getContext, onDestroy } from "svelte"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
     import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
@@ -11,7 +11,7 @@
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
-    import { createCSSVariables } from "../helpers/showActions"
+    import { createCSSVariables, replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
     import Media from "../output/layers/Media.svelte"
@@ -25,7 +25,6 @@
     import Movebox from "../system/Movebox.svelte"
     import SlideNotes from "./items/SlideNotes.svelte"
     import SlideText from "./items/SlideText.svelte"
-    import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, getSlideTextItems, stageItemToItem } from "./stage"
     import StageLayout from "./StageLayout.svelte"
 
@@ -35,7 +34,6 @@
     export let ratio: number
     export let preview = false
     export let edit = false
-    export let isMirrorItem = false
     export let disableStagePreview = false
 
     $: currentShow = stageLayout === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : stageLayout
@@ -50,12 +48,19 @@
         activeStage.update((ae) => {
             if (e.shiftKey) {
                 if (ae.items.includes(id)) {
-                    if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
+                    if (!e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
                 } else ae.items.push(id)
             } else ae.items = [id]
 
             return ae
         })
+
+        // deselect selected text
+        if (e.shiftKey) {
+            e.preventDefault()
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+            window.getSelection()?.removeAllRanges()
+        }
 
         let target = e.target.closest(".stage_item")
         if (!target) return
@@ -78,7 +83,13 @@
         }
     }
 
+    let isShiftPressed = false
+    function keyup(e: KeyboardEvent) {
+        if (e.key === "Shift") isShiftPressed = false
+    }
     function keydown(e: KeyboardEvent) {
+        if (e.key === "Shift") isShiftPressed = true
+
         if (!edit) return
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
@@ -175,8 +186,10 @@
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
-    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
-    $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
+    $: sourceOutputId = currentShow?.settings?.output
+    $: outputStores = $currentWindow === "output" ? $allOutputs : $outputs
+    $: stageOutputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
+    $: currentOutput = outputStores[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? $outputSlideCache[stageOutputId] || null : null)
 
     $: outputWindowId = item?.currentOutput?.source || stageOutputId
@@ -235,12 +248,13 @@
         return style
     }
 
-    let video: HTMLVideoElement | undefined
-    function loaded() {
-        if (!video) return
-        video.pause()
-        video.currentTime = video.duration / 2
-    }
+    // pause video at middle
+    // let video: HTMLVideoElement | undefined
+    // function loaded() {
+    //     if (!video) return
+    //     video.pause()
+    //     video.currentTime = video.duration / 2
+    // }
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {
@@ -280,9 +294,29 @@
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 
     $: cssVariables = createCSSVariables($variables, $outputs, "stage", updateTrigger)
+
+    // flash background (on mount & text changes)
+    $: flashColor = item?.flash?.color || "#FF0000"
+    $: flashCount = (() => {
+        if (edit) return 0
+        let value = Number(item?.flash?.count)
+        return !value || !Number.isFinite(value) || value < 1 ? 3 : Math.floor(value)
+    })()
+
+    const getLayoutMounted = getContext<() => boolean>("layoutMounted")
+    $: evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
+    let lastText = ""
+    let flashTriggerId = 0
+    $: if (item?.flash?.enabled) {
+        const currentText = evaluatedText || ""
+        const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
+
+        if (lastText !== currentText && currentText.trim() && !parentIsMounting) flashTriggerId++
+        lastText = currentText
+    }
 </script>
 
-<svelte:window on:keydown={keydown} on:mousedown={deselect} />
+<svelte:window on:mousedown={deselect} on:keydown={keydown} on:keyup={keyup} />
 
 <div
     {id}
@@ -292,12 +326,21 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
+    class:isShiftPressed
     style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id && item}
         <div class="label">{getCustomStageLabel(item.type || id, item, $dictionary)}</div>
     {/if}
+
+    <!-- flash background -->
+    {#if item?.flash?.enabled && flashTriggerId > 0}
+        {#key flashTriggerId}
+            <div class="flashBackground" style="background-color: {flashColor};animation-iteration-count: {flashCount};"></div>
+        {/key}
+    {/if}
+
     {#if edit && item}
         <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
 
@@ -349,7 +392,8 @@
                         <!-- WIP this only includes "next" slide background -->
                         {#if typeof slideBackground?.path === "string"}
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
+                                <!-- bind:video on:loaded={loaded} -->
+                                <Media outputId={outputWindowId} path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror />
                             </div>
                         {/if}
                     {/if}
@@ -371,11 +415,11 @@
                             </span>
                         {/key}
                     {:else}
-                        <Textbox item={stageItemToItem(item)} stageItem={item} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto || item.textFit !== "none"} isStage />
+                        <Textbox item={stageItemToItem(item)} stageItem={item} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto || (item.textFit && item.textFit !== "none")} isStage />
                     {/if}
                 {:else if item.type}
                     {#if newItem}
-                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} {isMirrorItem} outputId={stageOutputId} />
+                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} outputId={stageOutputId} />
                     {/if}
                 {:else}
                     <!-- OLD CODE -->
@@ -384,8 +428,6 @@
                             <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} outputId={stageOutputId} />
                         {:else if id.includes("clock")}
                             <Clock style={false} fontStyle={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
-                        {:else if id.includes("video")}
-                            <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                         {:else if id.includes("first_active_timer")}
                             <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                         {:else if id.includes("timers")}
@@ -429,6 +471,13 @@
 
     .stage_item.outline {
         outline: 5px solid rgb(255 255 255 / 0.2);
+    }
+    .stage_item.isShiftPressed,
+    .stage_item.isShiftPressed :global(*:not(.line)) {
+        cursor: default !important;
+    }
+    .stage_item.isShiftPressed :global(.line) {
+        cursor: move !important;
     }
     .stage_item.selected {
         outline: 5px solid var(--secondary);
@@ -528,5 +577,28 @@
     .actionButton :global(button) {
         padding: 5px !important;
         z-index: 3;
+    }
+
+    @keyframes stage-flash {
+        0% {
+            opacity: 0;
+        }
+        15% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+    .flashBackground {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+        animation-name: stage-flash;
+        animation-duration: 600ms;
+        animation-timing-function: ease-out;
+        animation-fill-mode: forwards;
     }
 </style>
