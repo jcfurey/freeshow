@@ -80,7 +80,6 @@ import {
     theme,
     themes,
     timers,
-    recentFiles,
     undoHistory,
     usageLog,
     variables,
