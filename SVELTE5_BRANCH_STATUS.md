@@ -4,10 +4,14 @@
 **Last updated:** 2026-08-17
 
 Companion to `PR_ROADMAP.md`, covering the upstream `svelte5` integration branch that
-#3396 was squash-merged into. The roadmap holds the same content in its
-"Upstream `svelte5` branch — transition feedback" section; this file exists because the
-web container has no git push credentials and the API push path needs whole-file content
-(see "Tooling constraint" below).
+#3396 was squash-merged into.
+
+**`PR_ROADMAP.md` has *not* been updated with any of this.** The API push path this
+container is limited to requires whole-file content per push, and the roadmap is ~49 KB,
+so this standalone file carries the record instead (see "Tooling constraint" below).
+Fold it into the roadmap once a real `git push` is available. Two roadmap entries are
+stale as a result: its `Last updated: 2026-06-17` header, and its open
+"fast-xml-parser — gated on @vassbo's pin reason" item, which is now resolved upstream.
 
 ## Branch pulled in
 
